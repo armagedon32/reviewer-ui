@@ -1,0 +1,8 @@
+exam_type,subject,topic,difficulty,question,a,b,c,d,answer
+LET,GenEd,Professional Education - Principles of Teaching,Easy,Which principle says learning moves from simple to complex?,Motivation,Gradation,Feedback,Individual differences,B
+LET,GenEd,Professional Education - Classroom Management,Easy,Which practice helps maintain order?,Ignoring misbehavior,Clear rules,Lack of routines,Inconsistent discipline,B
+LET,GenEd,Professional Education - Learning Theories,Easy,Who proposed behaviorism?,Jean Piaget,Lev Vygotsky,B.F. Skinner,Howard Gardner,C
+LET,GenEd,Professional Education - Assessment,Easy,Which test measures prior knowledge?,Summative,Diagnostic,Formative,Norm-referenced,B
+LET,GenEd,Reading,Easy,What is the main idea of a paragraph?,The supporting details,The topic sentence,The conclusion,The title,B
+LET,Mathematics,Algebra,Medium,What is x if 2x + 4 = 10?,2,3,4,5,B
+CPA,Taxation,VAT,Medium,What is the standard VAT rate in the Philippines?,8%,10%,12%,15%,C
