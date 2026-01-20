@@ -310,10 +310,20 @@ export default function Dashboard() {
 
   const studentProfileComplete =
     !!profile &&
-    !!profile.student_id &&
-    !!profile.name &&
-    !!profile.course &&
-    !!profile.exam_type;
+    !!profile.student_id_number &&
+    !!profile.first_name &&
+    !!profile.last_name &&
+    !!profile.email_address &&
+    !!profile.username &&
+    !!profile.program_degree &&
+    !!profile.status &&
+    !!profile.target_licensure &&
+    (profile.target_licensure !== "LET" ||
+      profile.let_track === "Elementary" ||
+      !!profile.major_specialization) &&
+    Array.isArray(profile.assigned_review_subjects) &&
+    profile.assigned_review_subjects.length > 0 &&
+    typeof profile.required_passing_threshold === "number";
   const instructorProfileComplete =
     !!instructorProfile &&
     !!instructorProfile.name &&
@@ -414,34 +424,68 @@ export default function Dashboard() {
                     <div className="profile-grid">
                       <div className="profile-item">
                         <span className="profile-label">Student ID</span>
-                        <span className="profile-value">{profile.student_id}</span>
+                        <span className="profile-value">{profile.student_id_number}</span>
                       </div>
                       <div className="profile-item">
-                        <span className="profile-label">Name</span>
-                        <span className="profile-value">{profile.name}</span>
+                        <span className="profile-label">Full Name</span>
+                        <span className="profile-value">
+                          {[profile.first_name, profile.middle_name, profile.last_name]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </span>
                       </div>
                       <div className="profile-item">
-                        <span className="profile-label">Course</span>
-                        <span className="profile-value">{profile.course}</span>
+                        <span className="profile-label">Email</span>
+                        <span className="profile-value">{profile.email_address}</span>
                       </div>
                       <div className="profile-item">
-                        <span className="profile-label">Exam Type</span>
-                        <span className="profile-value">{profile.exam_type}</span>
+                        <span className="profile-label">Username</span>
+                        <span className="profile-value">{profile.username}</span>
                       </div>
-                      {profile.exam_type === "LET" && (
-                        <>
-                          <div className="profile-item">
-                            <span className="profile-label">LET Track</span>
-                            <span className="profile-value">{profile.let_track}</span>
-                          </div>
-                          {profile.let_track === "Secondary" && (
-                            <div className="profile-item">
-                              <span className="profile-label">Major</span>
-                              <span className="profile-value">{profile.let_major || "-"}</span>
-                            </div>
-                          )}
-                        </>
+                      <div className="profile-item">
+                        <span className="profile-label">Program / Degree</span>
+                        <span className="profile-value">{profile.program_degree}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Year Level</span>
+                        <span className="profile-value">{profile.year_level}</span>
+                      </div>
+                      {profile.section_class && (
+                        <div className="profile-item">
+                          <span className="profile-label">Section / Class</span>
+                          <span className="profile-value">{profile.section_class}</span>
+                        </div>
                       )}
+                      <div className="profile-item">
+                        <span className="profile-label">Status</span>
+                        <span className="profile-value">{profile.status}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Target Licensure</span>
+                        <span className="profile-value">{profile.target_licensure}</span>
+                      </div>
+                      {profile.target_licensure === "LET" && (
+                        <div className="profile-item">
+                          <span className="profile-label">LET Track</span>
+                          <span className="profile-value">{profile.let_track}</span>
+                        </div>
+                      )}
+                      <div className="profile-item">
+                        <span className="profile-label">Specialization</span>
+                        <span className="profile-value">{profile.major_specialization}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Review Subjects</span>
+                        <span className="profile-value">
+                          {profile.assigned_review_subjects?.join(", ")}
+                        </span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Passing Threshold</span>
+                        <span className="profile-value">
+                          {profile.required_passing_threshold}%
+                        </span>
+                      </div>
                     </div>
                     <div className="badge-card">
                       <svg
@@ -513,7 +557,11 @@ export default function Dashboard() {
                       </div>
                       <div className="metric">
                         <span className="metric-label">Target</span>
-                        <span className="metric-value">90%</span>
+                        <span className="metric-value">
+                          {profile?.required_passing_threshold
+                            ? `${profile.required_passing_threshold}%`
+                            : "90%"}
+                        </span>
                       </div>
                     </div>
                   </section>

@@ -29,20 +29,6 @@ export function saveUser(data, email) {
   localStorage.setItem("login_time", String(Date.now()));
 }
 
-export async function register(email, password, role) {
-  const res = await fetch(`${API_URL}/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, role }),
-  });
-
-  if (!res.ok) {
-    throw new Error("Registration failed");
-  }
-
-  return res.json();
-}
-
 export async function registerAdmin(email, password, admin_key) {
   const res = await fetch(`${API_URL}/auth/register-admin`, {
     method: "POST",

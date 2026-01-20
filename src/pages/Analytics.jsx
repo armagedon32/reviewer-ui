@@ -148,23 +148,29 @@ export default function Analytics() {
           <div className="analytics-info-grid">
             <div className="info-item">
               <span className="info-label">Name</span>
-              <span className="info-value">{profile?.name || "Not set"}</span>
+              <span className="info-value">
+                {profile
+                  ? [profile.first_name, profile.middle_name, profile.last_name]
+                      .filter(Boolean)
+                      .join(" ")
+                  : "Not set"}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Email</span>
               <span className="info-value">{user?.email || "-"}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Course</span>
-              <span className="info-value">{profile?.course || "Not set"}</span>
+              <span className="info-label">Program</span>
+              <span className="info-value">{profile?.program_degree || "Not set"}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Exam Type</span>
-              <span className="info-value">{profile?.exam_type || "Not set"}</span>
+              <span className="info-label">Target Licensure</span>
+              <span className="info-value">{profile?.target_licensure || "Not set"}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">LET Track</span>
-              <span className="info-value">{profile?.let_track || "Not set"}</span>
+              <span className="info-label">Specialization</span>
+              <span className="info-value">{profile?.major_specialization || "Not set"}</span>
             </div>
             <div className="info-item badge-item">
               <span className="info-label">Badge</span>
@@ -216,7 +222,11 @@ export default function Analytics() {
             </div>
             <div>
               <p className="analytics-label">Target</p>
-              <p className="analytics-value">90%</p>
+              <p className="analytics-value">
+                {profile?.required_passing_threshold
+                  ? `${profile.required_passing_threshold}%`
+                  : "90%"}
+              </p>
             </div>
           </div>
         </section>

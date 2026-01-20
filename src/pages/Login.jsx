@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { login, saveUser } from "../auth";
@@ -76,8 +76,7 @@ export default function Login() {
         </form>
 
         <p className="auth-switch">
-          Don’t have an account?{" "}
-          <Link to="/register">Register</Link>
+          Don't have an account? Contact your admin.
         </p>
       </div>
     </div>

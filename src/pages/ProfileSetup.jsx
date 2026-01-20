@@ -2,37 +2,94 @@ import { useEffect, useRef, useState } from "react";
 import { getProfileApi, requestAccessApi, saveProfileApi } from "../api";
 import { getUser } from "../auth";
 
-export default function ProfileSetup({ onSaved, onCancel }) {
-  const [student_id, setStudentId] = useState("");
-  const [name, setName] = useState("");
-  const [course, setCourse] = useState("");
+const LICENSURE_RULES = {
+  LET: {
+    subjects: ["GenEd", "ProfEd", "Specialization"],
+    passingThreshold: 75,
+  },
+  CPA: {
+    subjects: ["FAR", "AFAR", "Auditing", "MAS", "RFBT", "Taxation"],
+    passingThreshold: 75,
+  },
+  "Internal Certification": {
+    subjects: ["Core", "Applied", "Practicum"],
+    passingThreshold: 80,
+  },
+};
 
-  const [exam_type, setExamType] = useState("LET");
-  const [let_track, setLetTrack] = useState("Elementary");
-  const [let_major, setLetMajor] = useState("");
+export default function ProfileSetup({ onSaved, onCancel }) {
+  const user = getUser();
+  const [studentIdNumber, setStudentIdNumber] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [emailAddress, setEmailAddress] = useState(user?.email || "");
+  const [username, setUsername] = useState("");
+  const [programDegree, setProgramDegree] = useState("");
+  const [yearLevel, setYearLevel] = useState("");
+  const [sectionClass, setSectionClass] = useState("");
+  const [status, setStatus] = useState("Active");
+  const [targetLicensure, setTargetLicensure] = useState("LET");
+  const [letTrack, setLetTrack] = useState("Elementary");
+  const [majorSpecialization, setMajorSpecialization] = useState("");
+  const [assignedReviewSubjects, setAssignedReviewSubjects] = useState([]);
+  const [requiredPassingThreshold, setRequiredPassingThreshold] = useState(
+    LICENSURE_RULES.LET.passingThreshold
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const user = getUser();
   const initialProfileRef = useRef(null);
 
   useEffect(() => {
-    // If profile exists, fill it
+    if (user?.email && !emailAddress) {
+      setEmailAddress(user.email);
+    }
+  }, [user?.email, emailAddress]);
+
+  useEffect(() => {
+    const rule = LICENSURE_RULES[targetLicensure];
+    if (!rule) return;
+    const baseSubjects = rule.subjects;
+    let subjects = baseSubjects;
+    if (targetLicensure === "LET" && letTrack === "Elementary") {
+      subjects = baseSubjects.filter((subject) => subject !== "Specialization");
+    }
+    setRequiredPassingThreshold(rule.passingThreshold);
+    setAssignedReviewSubjects((prev) => {
+      const filtered = prev.filter((subject) => subjects.includes(subject));
+      return filtered.length ? filtered : subjects;
+    });
+  }, [targetLicensure, letTrack]);
+
+  useEffect(() => {
     (async () => {
       const existing = await getProfileApi();
       if (existing) {
-        setStudentId(existing.student_id || "");
-        setName(existing.name || "");
-        setCourse(existing.course || "");
-        setExamType(existing.exam_type || "LET");
+        setStudentIdNumber(existing.student_id_number || "");
+        setFirstName(existing.first_name || "");
+        setMiddleName(existing.middle_name || "");
+        setLastName(existing.last_name || "");
+        setEmailAddress(existing.email_address || user?.email || "");
+        setUsername(existing.username || "");
+        setProgramDegree(existing.program_degree || "");
+        setYearLevel(existing.year_level ?? "");
+        setSectionClass(existing.section_class || "");
+        setStatus(existing.status || "Active");
+        setTargetLicensure(existing.target_licensure || "LET");
         setLetTrack(existing.let_track || "Elementary");
-        setLetMajor(existing.let_major || "");
+        setMajorSpecialization(existing.major_specialization || "");
+        setAssignedReviewSubjects(existing.assigned_review_subjects || []);
+        setRequiredPassingThreshold(
+          existing.required_passing_threshold ||
+            LICENSURE_RULES[existing.target_licensure || "LET"].passingThreshold
+        );
         initialProfileRef.current = existing;
       } else {
         initialProfileRef.current = null;
       }
     })();
-  }, []);
+  }, [user?.email]);
 
   async function handleSave(e) {
     e.preventDefault();
@@ -41,40 +98,60 @@ export default function ProfileSetup({ onSaved, onCancel }) {
 
     try {
       const payload = {
-        student_id,
-        name,
-        course,
-        exam_type,
-        let_track: exam_type === "LET" ? let_track : null,
-        let_major: exam_type === "LET" && let_track === "Secondary" ? let_major : null,
+        student_id_number: studentIdNumber,
+        first_name: firstName,
+        middle_name: middleName,
+        last_name: lastName,
+        email_address: emailAddress || user?.email || "",
+        username,
+        program_degree: programDegree,
+        year_level: yearLevel === "" ? null : Number(yearLevel),
+        section_class: sectionClass || null,
+        status,
+        target_licensure: targetLicensure,
+        let_track: targetLicensure === "LET" ? letTrack : null,
+        major_specialization: majorSpecialization,
+        assigned_review_subjects: availableSubjects,
+        required_passing_threshold: requiredPassingThreshold,
       };
 
       const saved = await saveProfileApi(payload);
       if (user?.email) {
         const previous = initialProfileRef.current;
+        const fullName = `${firstName} ${middleName} ${lastName}`.replace(/\s+/g, " ").trim();
         let detail = "New account: profile submitted.";
         if (previous) {
           const changes = [];
-          if ((previous.student_id || "") !== student_id) {
-            changes.push(`Student ID: ${previous.student_id || "-"} -> ${student_id}`);
-          }
-          if ((previous.name || "") !== name) {
-            changes.push(`Name: ${previous.name || "-"} -> ${name}`);
-          }
-          if ((previous.course || "") !== course) {
-            changes.push(`Course: ${previous.course || "-"} -> ${course}`);
-          }
-          if ((previous.exam_type || "") !== exam_type) {
-            changes.push(`Exam Type: ${previous.exam_type || "-"} -> ${exam_type}`);
-          }
-          if ((previous.let_track || "") !== (payload.let_track || "")) {
+          if ((previous.student_id_number || "") !== studentIdNumber) {
             changes.push(
-              `LET Track: ${previous.let_track || "-"} -> ${payload.let_track || "-"}`
+              `Student ID: ${previous.student_id_number || "-"} -> ${studentIdNumber}`
             );
           }
-          if ((previous.let_major || "") !== (payload.let_major || "")) {
+          if (
+            `${previous.first_name || ""} ${previous.middle_name || ""} ${previous.last_name || ""}`
+              .replace(/\s+/g, " ")
+              .trim() !== fullName
+          ) {
+            changes.push(`Name: ${fullName}`);
+          }
+          if ((previous.program_degree || "") !== programDegree) {
             changes.push(
-              `LET Major: ${previous.let_major || "-"} -> ${payload.let_major || "-"}`
+              `Program: ${previous.program_degree || "-"} -> ${programDegree}`
+            );
+          }
+          if ((previous.year_level || "") !== Number(yearLevel)) {
+            changes.push(
+              `Year Level: ${previous.year_level || "-"} -> ${yearLevel}`
+            );
+          }
+          if ((previous.target_licensure || "") !== targetLicensure) {
+            changes.push(
+              `Licensure: ${previous.target_licensure || "-"} -> ${targetLicensure}`
+            );
+          }
+          if ((previous.major_specialization || "") !== majorSpecialization) {
+            changes.push(
+              `Specialization: ${previous.major_specialization || "-"} -> ${majorSpecialization}`
             );
           }
           detail = changes.length
@@ -83,7 +160,7 @@ export default function ProfileSetup({ onSaved, onCancel }) {
         }
         await requestAccessApi(detail);
       }
-      onSaved?.(saved || payload); // tell Dashboard to refresh
+      onSaved?.(saved || payload);
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -91,54 +168,121 @@ export default function ProfileSetup({ onSaved, onCancel }) {
     }
   }
 
+  const rule = LICENSURE_RULES[targetLicensure];
+  const availableSubjects =
+    targetLicensure === "LET" && letTrack === "Elementary"
+      ? rule.subjects.filter((subject) => subject !== "Specialization")
+      : rule.subjects;
+
   return (
     <div style={{ width: "100%" }}>
       <h3>Student Profile & Exam Setup</h3>
 
       <form onSubmit={handleSave}>
-        <label>Student ID</label>
-        <input value={student_id} onChange={(e) => setStudentId(e.target.value)} required />
+        <label>Student ID Number</label>
+        <input
+          value={studentIdNumber}
+          onChange={(e) => setStudentIdNumber(e.target.value)}
+          required
+        />
 
-        <label>Name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} required />
+        <label>First Name</label>
+        <input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
 
-        <label>Course</label>
-        <input value={course} onChange={(e) => setCourse(e.target.value)} required />
+        <label>Middle Name (optional)</label>
+        <input value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
 
-        <label>Exam Type</label>
-        <select value={exam_type} onChange={(e) => setExamType(e.target.value)}>
-          <option value="LET">LET</option>
-          <option value="CPA">CPA</option>
+        <label>Last Name</label>
+        <input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+
+        <label>Email Address (institutional)</label>
+        <input value={emailAddress} readOnly required />
+
+        <label>Username</label>
+        <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+
+        <label>Program / Degree</label>
+        <input
+          value={programDegree}
+          onChange={(e) => setProgramDegree(e.target.value)}
+          required
+        />
+
+        <label>Year Level (optional)</label>
+        <input
+          type="number"
+          min="1"
+          max="6"
+          value={yearLevel}
+          onChange={(e) => setYearLevel(e.target.value)}
+        />
+
+        <label>Section / Class (optional)</label>
+        <input
+          value={sectionClass}
+          onChange={(e) => setSectionClass(e.target.value)}
+        />
+
+        <label>Status</label>
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Graduated">Graduated</option>
         </select>
 
-        {exam_type === "LET" && (
+        <label>Target Licensure / Certification</label>
+        <select value={targetLicensure} onChange={(e) => setTargetLicensure(e.target.value)}>
+          <option value="LET">LET</option>
+          <option value="CPA">CPA</option>
+          <option value="Internal Certification">Internal Certification</option>
+        </select>
+
+        {targetLicensure === "LET" && (
           <>
             <label>LET Track</label>
-            <select value={let_track} onChange={(e) => setLetTrack(e.target.value)}>
+            <select value={letTrack} onChange={(e) => setLetTrack(e.target.value)}>
               <option value="Elementary">Elementary</option>
-              <option value="Secondary">Secondary / High School</option>
+              <option value="Secondary">Secondary</option>
             </select>
+          </>
+        )}
 
-            {let_track === "Secondary" && (
-              <>
-                <label>Major</label>
-                <select value={let_major} onChange={(e) => setLetMajor(e.target.value)} required>
-                  <option value="">Select major...</option>
-                  <option value="Mathematics">Mathematics</option>
-                  <option value="Social Studies">Social Studies</option>
-                  <option value="Filipino">Filipino</option>
-                  <option value="English">English</option>
-                </select>
-              </>
+        {(targetLicensure !== "LET" || letTrack === "Secondary") && (
+          <>
+            <label>Major / Specialization</label>
+            {targetLicensure === "LET" ? (
+              <select
+                value={majorSpecialization}
+                onChange={(e) => setMajorSpecialization(e.target.value)}
+                required
+              >
+                <option value="">Select major...</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Filipino">Filipino</option>
+                <option value="Social Studies">Social Studies</option>
+                <option value="English">English</option>
+              </select>
+            ) : (
+              <input
+                value={majorSpecialization}
+                onChange={(e) => setMajorSpecialization(e.target.value)}
+                required
+              />
             )}
           </>
         )}
 
-        {exam_type === "CPA" && (
-          <p style={{ marginTop: 10 }}>
-            CPA scope: FAR, AFAR, Auditing, MAS, RFBT, Taxation (auto-mixed)
-          </p>
-        )}
+        <label>Assigned Review Subjects</label>
+        <div className="subject-chip-list">
+          {availableSubjects.map((subject) => (
+            <span key={subject} className="subject-chip">
+              {subject}
+            </span>
+          ))}
+        </div>
+
+        <label>Required Passing Threshold</label>
+        <input value={`${requiredPassingThreshold}%`} readOnly />
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 

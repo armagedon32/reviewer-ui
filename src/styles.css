@@ -15,6 +15,12 @@
   --radius-sm: 8px;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: "Trebuchet MS", "Verdana", "Segoe UI", sans-serif;
@@ -313,6 +319,127 @@ button:disabled {
 .reset-password-modal .admin-form-actions button {
   width: auto;
   min-width: 140px;
+}
+
+.admin-modal {
+  width: min(980px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  text-align: left;
+}
+
+.admin-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.admin-modal-close {
+  width: auto;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #0f172a;
+  box-shadow: none;
+}
+
+.admin-modal-close:hover {
+  background: #cbd5e1;
+  transform: none;
+  box-shadow: none;
+}
+
+.admin-modal-body {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-control-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.admin-modal .admin-form-grid {
+  max-width: none;
+}
+
+.admin-modal .admin-search input {
+  max-width: none;
+}
+
+.admin-modal .admin-form-grid {
+  gap: 24px;
+}
+
+
+.admin-modal .admin-form-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+.admin-modal .admin-form-actions button {
+  width: auto;
+  min-width: 200px;
+}
+
+.admin-modal .admin-form-field input,
+.admin-modal .admin-form-field select {
+  margin-bottom: 0;
+}
+
+.admin-modal .admin-search {
+  margin-top: 18px;
+}
+
+.subject-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 16px;
+}
+
+.subject-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.admin-inline {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-inline input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.admin-inline-btn {
+  width: auto;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #0f172a;
+  box-shadow: none;
+}
+
+.admin-inline-btn:hover {
+  background: #cbd5e1;
+  transform: none;
+  box-shadow: none;
 }
 
 .reset-password-result {
@@ -1468,7 +1595,7 @@ button:disabled {
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 20px;
   align-items: end;
   max-width: 720px;
 }

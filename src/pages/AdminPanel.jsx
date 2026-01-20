@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   deleteUserApi,
+  createUserApi,
   getAdminSettingsApi,
   listAuditLogsApi,
   listAccessRequestsApi,
@@ -32,7 +33,17 @@ export default function AdminPanel() {
   const [logFromDate, setLogFromDate] = useState("");
   const [logToDate, setLogToDate] = useState("");
   const [saving, setSaving] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [usersModalOpen, setUsersModalOpen] = useState(false);
+  const [logsModalOpen, setLogsModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    role: "student",
+    password: "",
+  });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -87,6 +98,15 @@ export default function AdminPanel() {
       open: false,
       user: null,
     }));
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let output = "";
+    for (let i = 0; i < 12; i += 1) {
+      output += chars[Math.floor(Math.random() * chars.length)];
+    }
+    setCreateForm((prev) => ({ ...prev, password: output }));
+  };
 
 
 
@@ -148,6 +168,42 @@ export default function AdminPanel() {
     listAuditLogsApi()
       .then((data) => setLogs(Array.isArray(data) ? data : []))
       .catch(() => setLogs([]));
+  };
+
+  const handleCreateUser = async (event) => {
+    event.preventDefault();
+    setCreating(true);
+    setCreateError("");
+    try {
+      const payload = {
+        email: createForm.email.trim(),
+        role: createForm.role,
+      };
+      if (createForm.password.trim()) {
+        payload.password = createForm.password;
+        payload.require_password_change = true;
+      }
+      const data = await createUserApi(payload);
+      refreshUsers();
+      refreshLogs();
+      setCreateForm({ email: "", role: "student", password: "" });
+      const tempInfo = data.temporary_password
+        ? `Temporary password: ${data.temporary_password}${
+            data.expires_at
+              ? ` (expires ${new Date(data.expires_at).toLocaleString()})`
+              : ""
+          }`
+        : "User created successfully.";
+      showModal({
+        title: "User created",
+        message: tempInfo,
+      });
+    } catch (err) {
+      const message = err?.message || "Failed to create user";
+      setCreateError(message);
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleSave = async (event) => {
@@ -428,180 +484,296 @@ export default function AdminPanel() {
 
         <section className="dashboard-card">
           <div className="card-header">
-            <h3>Exam Timer</h3>
-            <span className="status-note">Applies to all new exams</span>
+            <h3>Admin Controls</h3>
+            <span className="status-note">Open a module</span>
           </div>
-          <form onSubmit={handleSave} className="admin-form">
-            <div className="admin-form-grid">
-              <div className="admin-form-field">
-                <label htmlFor="examTime">Time limit (minutes)</label>
-                <input
-                  id="examTime"
-                  type="number"
-                  min="10"
-                  max="240"
-                  value={settings.exam_time_limit_minutes}
-                  onChange={(event) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      exam_time_limit_minutes: Number(event.target.value),
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="admin-form-field">
-                <label htmlFor="examCount">Exam items</label>
-                <input
-                  id="examCount"
-                  type="number"
-                  min="10"
-                  max="200"
-                  value={settings.exam_question_count}
-                  onChange={(event) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      exam_question_count: Number(event.target.value),
-                    }))
-                  }
-                  required
-                />
-              </div>
-              {error && <p className="error-text admin-form-error">{error}</p>}
-              <div className="admin-form-actions">
-                <button type="submit" disabled={saving}>
-                  {saving ? "Saving..." : "Save Settings"}
-                </button>
-              </div>
-            </div>
-          </form>
-        </section>
-
-        <section className="dashboard-card">
-          <div className="card-header">
-            <h3>Users</h3>
-            <span className="status-note">{users.length} total</span>
+          <div className="admin-control-actions">
+            <button type="button" onClick={() => setSettingsModalOpen(true)}>
+              Exam Settings
+            </button>
+            <button type="button" onClick={() => setUsersModalOpen(true)}>
+              User Management
+            </button>
+            <button type="button" onClick={() => setLogsModalOpen(true)}>
+              Audit Logs
+            </button>
           </div>
-          <div className="admin-search">
-            <input
-              type="text"
-              placeholder="Search users by email or role..."
-              value={userFilter}
-              onChange={(event) => setUserFilter(event.target.value)}
-            />
-          </div>
-          {filteredUsers.length ? (
-            <div className="admin-user-list">
-              {filteredUsers.map((user) => (
-                <div key={user.id} className="admin-user-row">
-                  <div>
-                    <p className="admin-user-email">{user.email}</p>
-                    <p className="admin-user-meta">
-                      {user.role} - {new Date(user.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="admin-user-actions">
-                    <button
-                      className={`admin-action-btn ${accessClassFor(user)}`}
-                      onClick={() => confirmDisable(user)}
-                      disabled={accessStatuses[user.id]?.status !== "approved"}
-                    >
-                      {accessLabelFor(user)}
-                    </button>
-                    {canApproveUser(user) && (
-                      <>
-                        <button
-                          className="admin-action-btn warning"
-                          onClick={() => handleApproveRequest(user)}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="admin-action-btn fail"
-                          onClick={() => handleRejectRequest(user)}
-                        >
-                          Deny
-                        </button>
-                      </>
-                    )}
-                    <button
-                      className="admin-action-btn subtle"
-                      onClick={() => confirmResetExams(user)}
-                    >
-                      Reset Exams
-                    </button>
-                    <button
-                      className="admin-action-btn warning"
-                      onClick={() => openResetModal(user)}
-                    >
-                      Reset Password
-                    </button>
-                    <button
-                      className="admin-action-btn subtle"
-                      disabled={user.active}
-                      onClick={() => confirmDelete(user)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="history-empty">No users yet.</p>
-          )}
-        </section>
-
-        <section className="dashboard-card">
-          <div className="card-header">
-            <h3>Audit Logs</h3>
-            <span className="status-note">Latest 100 events</span>
-          </div>
-          <div className="admin-log-filter">
-            <input
-              type="text"
-              placeholder="Search action or detail..."
-              value={logQuery}
-              onChange={(event) => setLogQuery(event.target.value)}
-            />
-            <div className="admin-log-dates">
-              <label>
-                <span>From</span>
-                <input
-                  type="date"
-                  value={logFromDate}
-                  onChange={(event) => setLogFromDate(event.target.value)}
-                />
-              </label>
-              <label>
-                <span>To</span>
-                <input
-                  type="date"
-                  value={logToDate}
-                  onChange={(event) => setLogToDate(event.target.value)}
-                />
-              </label>
-            </div>
-          </div>
-          {filteredLogs.length ? (
-            <div className="admin-log-list">
-              {filteredLogs.map((log) => (
-                <div key={log.id} className="admin-log-row">
-                  <div>
-                    <p className="admin-log-action">{log.action}</p>
-                    <p className="admin-log-detail">{log.detail}</p>
-                  </div>
-                  <span className="admin-log-date">
-                    {new Date(log.created_at).toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="history-empty">No audit logs found.</p>
-          )}
         </section>
       </div>
+      {settingsModalOpen && (
+        <div className="alert-overlay">
+          <div className="alert-modal admin-modal">
+            <div className="admin-modal-header">
+              <h3>Exam Settings</h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setSettingsModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="admin-modal-body">
+              <div className="card-header">
+                <h4>Exam Timer</h4>
+                <span className="status-note">Applies to all new exams</span>
+              </div>
+              <form onSubmit={handleSave} className="admin-form">
+                <div className="admin-form-grid">
+                  <div className="admin-form-field">
+                    <label htmlFor="examTime">Time limit (minutes)</label>
+                    <input
+                      id="examTime"
+                      type="number"
+                      min="10"
+                      max="240"
+                      value={settings.exam_time_limit_minutes}
+                      onChange={(event) =>
+                        setSettings((prev) => ({
+                          ...prev,
+                          exam_time_limit_minutes: Number(event.target.value),
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="admin-form-field">
+                    <label htmlFor="examCount">Exam items</label>
+                    <input
+                      id="examCount"
+                      type="number"
+                      min="10"
+                      max="200"
+                      value={settings.exam_question_count}
+                      onChange={(event) =>
+                        setSettings((prev) => ({
+                          ...prev,
+                          exam_question_count: Number(event.target.value),
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  {error && <p className="error-text admin-form-error">{error}</p>}
+                  <div className="admin-form-actions">
+                    <button type="submit" disabled={saving}>
+                      {saving ? "Saving..." : "Save Settings"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {usersModalOpen && (
+        <div className="alert-overlay">
+          <div className="alert-modal admin-modal">
+            <div className="admin-modal-header">
+              <h3>User Management</h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setUsersModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="admin-modal-body">
+              <div className="card-header">
+                <h4>Create User</h4>
+                <span className="status-note">{users.length} total</span>
+              </div>
+              <form onSubmit={handleCreateUser} className="admin-form">
+                <div className="admin-form-grid">
+                  <div className="admin-form-field">
+                    <label htmlFor="createEmail">Email</label>
+                    <input
+                      id="createEmail"
+                      type="email"
+                      value={createForm.email}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, email: event.target.value }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="admin-form-field">
+                    <label htmlFor="createRole">Role</label>
+                  <select
+                    id="createRole"
+                    value={createForm.role}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({ ...prev, role: event.target.value }))
+                    }
+                  >
+                    <option value="student">Student</option>
+                    <option value="instructor">Instructor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  </div>
+                  <div className="admin-form-field">
+                    <label htmlFor="createPassword">Password (optional, auto-generated if blank)</label>
+                    <div className="admin-inline">
+                      <input
+                        id="createPassword"
+                        type="text"
+                        value={createForm.password}
+                        onChange={(event) =>
+                          setCreateForm((prev) => ({ ...prev, password: event.target.value }))
+                        }
+                        placeholder="Leave blank to auto-generate"
+                      />
+                      <button type="button" className="admin-inline-btn" onClick={generatePassword}>
+                        Generate
+                      </button>
+                    </div>
+                  </div>
+                  {createError && <p className="error-text admin-form-error">{createError}</p>}
+                  <div className="admin-form-actions">
+                    <button type="submit" disabled={creating}>
+                      {creating ? "Creating..." : "Create User"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+              <div className="admin-search">
+                <input
+                  type="text"
+                  placeholder="Search users by email or role..."
+                  value={userFilter}
+                  onChange={(event) => setUserFilter(event.target.value)}
+                />
+              </div>
+              {filteredUsers.length ? (
+                <div className="admin-user-list">
+                  {filteredUsers.map((user) => (
+                    <div key={user.id} className="admin-user-row">
+                      <div>
+                        <p className="admin-user-email">{user.email}</p>
+                        <p className="admin-user-meta">
+                          {user.role} - {new Date(user.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="admin-user-actions">
+                        <button
+                          className={`admin-action-btn ${accessClassFor(user)}`}
+                          onClick={() => confirmDisable(user)}
+                          disabled={accessStatuses[user.id]?.status !== "approved"}
+                        >
+                          {accessLabelFor(user)}
+                        </button>
+                        {canApproveUser(user) && (
+                          <>
+                            <button
+                              className="admin-action-btn warning"
+                              onClick={() => handleApproveRequest(user)}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              className="admin-action-btn fail"
+                              onClick={() => handleRejectRequest(user)}
+                            >
+                              Deny
+                            </button>
+                          </>
+                        )}
+                        <button
+                          className="admin-action-btn subtle"
+                          onClick={() => confirmResetExams(user)}
+                        >
+                          Reset Exams
+                        </button>
+                        <button
+                          className="admin-action-btn warning"
+                          onClick={() => openResetModal(user)}
+                        >
+                          Reset Password
+                        </button>
+                        <button
+                          className="admin-action-btn subtle"
+                          disabled={user.active}
+                          onClick={() => confirmDelete(user)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="history-empty">No users yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {logsModalOpen && (
+        <div className="alert-overlay">
+          <div className="alert-modal admin-modal">
+            <div className="admin-modal-header">
+              <h3>Audit Logs</h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setLogsModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="admin-modal-body">
+              <div className="card-header">
+                <h4>Latest 100 events</h4>
+                <span className="status-note">Filter by date or text</span>
+              </div>
+              <div className="admin-log-filter">
+                <input
+                  type="text"
+                  placeholder="Search action or detail..."
+                  value={logQuery}
+                  onChange={(event) => setLogQuery(event.target.value)}
+                />
+                <div className="admin-log-dates">
+                  <label>
+                    <span>From</span>
+                    <input
+                      type="date"
+                      value={logFromDate}
+                      onChange={(event) => setLogFromDate(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>To</span>
+                    <input
+                      type="date"
+                      value={logToDate}
+                      onChange={(event) => setLogToDate(event.target.value)}
+                    />
+                  </label>
+                </div>
+              </div>
+              {filteredLogs.length ? (
+                <div className="admin-log-list">
+                  {filteredLogs.map((log) => (
+                    <div key={log.id} className="admin-log-row">
+                      <div>
+                        <p className="admin-log-action">{log.action}</p>
+                        <p className="admin-log-detail">{log.detail}</p>
+                      </div>
+                      <span className="admin-log-date">
+                        {new Date(log.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="history-empty">No audit logs found.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <AlertModal
         isOpen={modal.open}
         title={modal.title}

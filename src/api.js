@@ -1,6 +1,6 @@
 import { getUser } from "./auth";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export async function loginApi(email, password) {
   const res = await fetch(`${API_URL}/auth/login`, {
@@ -202,6 +202,19 @@ export async function listUsersApi() {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.detail || "Failed to load users");
+  }
+  return data;
+}
+
+export async function createUserApi(payload) {
+  const res = await fetch(`${API_URL}/admin/users`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to create user");
   }
   return data;
 }
