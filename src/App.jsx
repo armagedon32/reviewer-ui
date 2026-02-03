@@ -9,9 +9,17 @@ import UserAvatar from "./components/UserAvatar";
 import ReviewMissed from "./pages/ReviewMissed";
 import ExamPreview from "./pages/ExamPreview";
 import AdminPanel from "./pages/AdminPanel";
+import AdminSystemSettings from "./pages/AdminSystemSettings";
+import AdminExamSettings from "./pages/AdminExamSettings";
+import AdminUserManagement from "./pages/AdminUserManagement";
+import AdminAuditLogs from "./pages/AdminAuditLogs";
 import AdminRegister from "./pages/AdminRegister";
 import Analytics from "./pages/Analytics";
 import ChangePassword from "./pages/ChangePassword";
+import InstructorPerformance from "./pages/InstructorPerformance";
+import InstructorExamPreview from "./pages/InstructorExamPreview";
+import ApprovalPending from "./pages/ApprovalPending";
+
 
 export default function App() {
   return (
@@ -42,19 +50,70 @@ export default function App() {
         />
 
         <Route
+          path="/approval-pending"
+          element={
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
+              <ApprovalPending />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/questions"
           element={
-            <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+            <ProtectedRoute allowedRoles={["instructor"]}>
               <QuestionBank />
             </ProtectedRoute>
           }
         />
 
         <Route
+          path="/instructor-performance"
+          element={
+            <ProtectedRoute allowedRoles={["instructor"]}>
+              <InstructorPerformance />
+            </ProtectedRoute>
+          }
+        />
+
+
+        <Route
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/system-settings"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminSystemSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/exam-settings"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminExamSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminUserManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/audit-logs"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminAuditLogs />
             </ProtectedRoute>
           }
         />
@@ -72,8 +131,17 @@ export default function App() {
         <Route
           path="/exam-preview"
           element={
-            <ProtectedRoute allowedRoles={["student"]}>
+            <ProtectedRoute allowedRoles={["student", "instructor"]}>
               <ExamPreview />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/instructor-exam-preview"
+          element={
+            <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+              <InstructorExamPreview />
             </ProtectedRoute>
           }
         />

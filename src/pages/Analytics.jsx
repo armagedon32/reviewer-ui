@@ -1,23 +1,35 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
-import { getProfileApi } from "../api";
-import logo from "../assets/logo.png";
+import { getExamHistoryApi, getProfileApi } from "../api";
+import { getSystemLogo } from "../systemLogo";
 
 export default function Analytics() {
+  const logo = getSystemLogo();
   const navigate = useNavigate();
   const user = getUser();
   const [profile, setProfile] = useState(null);
+  const [examHistory, setExamHistory] = useState([]);
 
-  const examHistory = useMemo(() => {
+  useEffect(() => {
     const historyKey = user?.email ? `exam_history_${user.email}` : "exam_history";
-    const stored = localStorage.getItem(historyKey);
-    if (!stored) return [];
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [];
-    }
+    getExamHistoryApi()
+      .then((data) => {
+        setExamHistory(data);
+        localStorage.setItem(historyKey, JSON.stringify(data));
+        if (data.length === 0) {
+          localStorage.removeItem(historyKey);
+        }
+      })
+      .catch(() => {
+        const stored = localStorage.getItem(historyKey);
+        if (!stored) return;
+        try {
+          setExamHistory(JSON.parse(stored));
+        } catch {
+          setExamHistory([]);
+        }
+      });
   }, [user?.email]);
 
   useEffect(() => {

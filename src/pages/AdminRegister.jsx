@@ -4,9 +4,10 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { registerAdmin } from "../auth";
 import AlertModal from "../components/AlertModal";
-import logo from "../assets/logo.png";
+import { getSystemLogo } from "../systemLogo";
 
 export default function AdminRegister() {
+  const logo = getSystemLogo();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [adminKey, setAdminKey] = useState("");
@@ -70,6 +71,14 @@ export default function AdminRegister() {
         </h1>
 
         <p className="system-subtitle">Kolehiyo ng Subic</p>
+        <AlertModal
+          isOpen={modal.open}
+          title={modal.title}
+          message={modal.message}
+          type={modal.type}
+          confirmText={modal.confirmText}
+          onConfirm={modal.onConfirm || closeModal}
+        />
 
         <InputField
           label="Admin Email"
@@ -101,14 +110,6 @@ export default function AdminRegister() {
           Back to <Link to="/">login</Link>
         </p>
       </div>
-      <AlertModal
-        isOpen={modal.open}
-        title={modal.title}
-        message={modal.message}
-        type={modal.type}
-        confirmText={modal.confirmText}
-        onConfirm={modal.onConfirm || closeModal}
-      />
     </div>
   );
 }

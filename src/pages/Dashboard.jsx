@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
-import { getAccessStatusApi, getExamStatsApi, getProfileApi, requestAccessApi } from "../api";
+import { getAccessStatusApi, getExamHistoryApi, getExamStatsApi, getProfileApi, requestAccessApi } from "../api";
 import ProfileSetup from "./ProfileSetup";
 import InstructorProfileSetup from "./InstructorProfileSetup";
 import AlertModal from "../components/AlertModal";
-import logo from "../assets/logo.png";
+import { getSystemLogo } from "../systemLogo";
 
 export default function Dashboard() {
   const user = getUser();
+  const logo = getSystemLogo();
 
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -31,6 +32,8 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const forceProfileKey = user?.email ? `force_profile_setup_${user.email}` : "force_profile_setup";
+  const isForcedProfileSetup = localStorage.getItem(forceProfileKey) === "1";
 
   const closeModal = () =>
     setModal((prev) => ({
@@ -41,6 +44,10 @@ export default function Dashboard() {
   const handleProfileSaved = (savedProfile) => {
     setProfile(savedProfile);
     setEditingProfile(false);
+    const wasForced = localStorage.getItem(forceProfileKey) === "1";
+    if (wasForced) {
+      localStorage.removeItem(forceProfileKey);
+    }
     const wasEditing = editingProfile;
     const isApproved = accessDecision === "approved";
     if (user?.email) {
@@ -50,6 +57,10 @@ export default function Dashboard() {
           setAccessRequest(data.requested_at ? { requested_at: data.requested_at } : null);
         })
         .catch(() => {});
+    }
+    if (wasForced && !isApproved) {
+      navigate("/approval-pending", { replace: true });
+      return;
     }
     setModal({
       open: true,
@@ -73,6 +84,10 @@ export default function Dashboard() {
   const handleInstructorProfileSaved = (savedProfile) => {
     setInstructorProfile(savedProfile);
     setEditingInstructorProfile(false);
+    const wasForced = localStorage.getItem(forceProfileKey) === "1";
+    if (wasForced) {
+      localStorage.removeItem(forceProfileKey);
+    }
     const isApproved = accessDecision === "approved";
     if (user?.email) {
       getAccessStatusApi()
@@ -81,6 +96,10 @@ export default function Dashboard() {
           setAccessRequest(data.requested_at ? { requested_at: data.requested_at } : null);
         })
         .catch(() => {});
+    }
+    if (wasForced && !isApproved) {
+      navigate("/approval-pending", { replace: true });
+      return;
     }
     setModal({
       open: true,
@@ -112,6 +131,21 @@ export default function Dashboard() {
   }, [user.role]);
 
   useEffect(() => {
+    if (!isForcedProfileSetup) return;
+    if (user.role === "student" && !loadingProfile) {
+      setEditingProfile(true);
+    }
+    if (user.role === "instructor" && !loadingInstructorProfile) {
+      setEditingInstructorProfile(true);
+    }
+  }, [
+    isForcedProfileSetup,
+    user.role,
+    loadingProfile,
+    loadingInstructorProfile,
+  ]);
+
+  useEffect(() => {
     if (user.role !== "instructor") return;
     const storageKey = user?.email
       ? `instructor_profile_${user.email}`
@@ -131,6 +165,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user?.email || (user.role !== "student" && user.role !== "instructor")) {
+      return;
+    }
+    if (editingProfile || editingInstructorProfile) {
       return;
     }
     const refreshAccessState = async () => {
@@ -158,26 +195,37 @@ export default function Dashboard() {
     refreshAccessState();
     const interval = setInterval(refreshAccessState, 10000);
     return () => clearInterval(interval);
-  }, [user?.email, user?.role]);
+  }, [user?.email, user?.role, editingProfile, editingInstructorProfile]);
 
   useEffect(() => {
     const historyKey = user?.email ? `exam_history_${user.email}` : "exam_history";
-    const stored = localStorage.getItem(historyKey);
-    if (stored) {
-      try {
-        setExamHistory(JSON.parse(stored));
-      } catch {
-        setExamHistory([]);
-      }
-    }
+    getExamHistoryApi()
+      .then((data) => {
+        setExamHistory(data);
+        localStorage.setItem(historyKey, JSON.stringify(data));
+        if (data.length === 0) {
+          localStorage.removeItem(historyKey);
+        }
+      })
+      .catch(() => {
+        const stored = localStorage.getItem(historyKey);
+        if (stored) {
+          try {
+            setExamHistory(JSON.parse(stored));
+          } catch {
+            setExamHistory([]);
+          }
+        }
+      });
   }, []);
 
   useEffect(() => {
     if (user.role !== "instructor") return;
-    getExamStatsApi()
+    const program = instructorProfile?.program || null;
+    getExamStatsApi(program)
       .then((data) => setClassStats(data))
       .catch(() => setClassStats(null));
-  }, [user.role]);
+  }, [user.role, instructorProfile?.program]);
 
   const latestExam = examHistory[0] || null;
   const latestSubjects = latestExam?.subject_performance || {};
@@ -206,6 +254,45 @@ export default function Dashboard() {
   const latestResultText = latestExam
     ? `${latestExam.percentage}% (${latestExam.score}/${latestExam.total})`
     : "-";
+  const effectiveAccessDecision =
+    user.role === "admin" ? "approved" : accessDecision || "pending";
+  const isApproved = effectiveAccessDecision === "approved";
+  const instructorProfileSafe = instructorProfile || {
+    name: "-",
+    employee_id: "-",
+    department: "-",
+    position: "-",
+    program: "-",
+  };
+  const studentProfileComplete =
+    !!profile &&
+    !!profile.student_id_number &&
+    !!profile.first_name &&
+    !!profile.last_name &&
+    !!profile.email_address &&
+    !!profile.username &&
+    !!profile.program_degree &&
+    !!profile.status &&
+    !!profile.target_licensure &&
+    (profile.target_licensure !== "LET" ||
+      profile.let_track === "Elementary" ||
+      !!profile.major_specialization) &&
+    Array.isArray(profile.assigned_review_subjects) &&
+    profile.assigned_review_subjects.length > 0 &&
+    typeof profile.required_passing_threshold === "number";
+  const instructorProfileComplete =
+    !!instructorProfile &&
+    !!instructorProfile.name &&
+    !!instructorProfile.employee_id &&
+    !!instructorProfile.department &&
+    !!instructorProfile.position &&
+    !!instructorProfile.program;
+  const isProfileComplete =
+    user.role === "student"
+      ? studentProfileComplete
+      : user.role === "instructor"
+        ? instructorProfileComplete
+        : true;
   let statusLabel = latestExam ? latestExam.result : "Active";
   let statusClass =
     latestExam?.result === "PASS"
@@ -213,8 +300,8 @@ export default function Dashboard() {
       : latestExam?.result === "FAIL"
         ? "status-pill fail"
         : "status-pill";
-  if (user.role !== "admin" && accessDecision !== "approved") {
-    if (accessDecision === "denied") {
+  if (user.role !== "admin" && (effectiveAccessDecision !== "approved" || !isProfileComplete)) {
+    if (effectiveAccessDecision === "denied") {
       statusLabel = "Inactive";
       statusClass = "status-pill fail";
     } else {
@@ -308,29 +395,6 @@ export default function Dashboard() {
     }
   }, [user.role, profile, editingProfile, location.search, navigate]);
 
-  const studentProfileComplete =
-    !!profile &&
-    !!profile.student_id_number &&
-    !!profile.first_name &&
-    !!profile.last_name &&
-    !!profile.email_address &&
-    !!profile.username &&
-    !!profile.program_degree &&
-    !!profile.status &&
-    !!profile.target_licensure &&
-    (profile.target_licensure !== "LET" ||
-      profile.let_track === "Elementary" ||
-      !!profile.major_specialization) &&
-    Array.isArray(profile.assigned_review_subjects) &&
-    profile.assigned_review_subjects.length > 0 &&
-    typeof profile.required_passing_threshold === "number";
-  const instructorProfileComplete =
-    !!instructorProfile &&
-    !!instructorProfile.name &&
-    !!instructorProfile.employee_id &&
-    !!instructorProfile.department &&
-    !!instructorProfile.position &&
-    !!instructorProfile.program;
 
   const requestAccess = () => {
     if (!user?.email) return;
@@ -343,10 +407,9 @@ export default function Dashboard() {
   };
 
   const renderAccessGate = () => {
-    const status = accessDecision;
-    const isApproved = status === "approved";
+    const status = effectiveAccessDecision;
     if (isApproved) return null;
-    const requestExpired = !accessRequest;
+    const requestExpired = status === "expired";
     const title =
       status === "denied"
         ? "Access denied"
@@ -357,20 +420,20 @@ export default function Dashboard() {
       status === "denied"
         ? "Your account is inactive. Please contact the administrator or resend a request."
         : requestExpired || status === "expired"
-          ? "Your request timed out after 1 hour. Please resend to notify the admin."
-          : "Your profile is saved. An admin must approve your access before you can continue.";
+          ? "Your request timed out after 7 days. Please resend to notify the admin."
+          : "Your request is pending. Please wait for instructor/admin approval.";
+    const showResendButton = status === "denied" || requestExpired || status === "expired";
     return (
       <div className="dashboard-card">
         <h3>{title}</h3>
         <p className="status-note" style={{ marginTop: 8 }}>
           {message}
         </p>
-        <button
-          style={{ marginTop: 12 }}
-          onClick={() => requestAccess(roleLabel)}
-        >
-          Resend approval request
-        </button>
+        {showResendButton && (
+          <button style={{ marginTop: 12 }} onClick={() => requestAccess()}>
+            Resend approval request
+          </button>
+        )}
       </div>
     );
   };
@@ -398,23 +461,54 @@ export default function Dashboard() {
             </div>
           </div>
         </header>
+        <AlertModal
+          isOpen={modal.open}
+          title={modal.title}
+          message={modal.message}
+          type={modal.type}
+          confirmText={modal.confirmText}
+          onConfirm={modal.onConfirm || closeModal}
+        />
 
         {/* STUDENT */}
         {user.role === "student" && (
           <>
             {loadingProfile ? (
               <div className="dashboard-card">Loading profile...</div>
-            ) : !studentProfileComplete || editingProfile ? (
+            ) : !isApproved && !editingProfile ? (
+              renderAccessGate()
+            ) : editingProfile ? (
               <div className="dashboard-card">
                 <ProfileSetup
                   onSaved={handleProfileSaved}
                   onCancel={() => setEditingProfile(false)}
                 />
               </div>
-            ) : accessDecision !== "approved" ? (
-              renderAccessGate()
+            ) : !profile ? (
+              <div className="dashboard-card">
+                <h3>Profile not set</h3>
+                <p className="status-note" style={{ marginTop: 8 }}>
+                  Your account is approved. Please complete your profile to access exams
+                  and analytics.
+                </p>
+                <button style={{ marginTop: 12 }} onClick={() => setEditingProfile(true)}>
+                  Complete Profile
+                </button>
+              </div>
             ) : (
               <>
+                {!studentProfileComplete && (
+                  <div className="dashboard-card">
+                    <h3>Profile incomplete</h3>
+                    <p className="status-note" style={{ marginTop: 8 }}>
+                      Your account is approved. You can continue using the dashboard,
+                      but completing your profile improves exam setup and tracking.
+                    </p>
+                    <button style={{ marginTop: 12 }} onClick={() => setEditingProfile(true)}>
+                      Complete Profile
+                    </button>
+                  </div>
+                )}
                 <div className="dashboard-grid">
                   <section className="dashboard-card profile-card">
                     <div className="card-header">
@@ -738,16 +832,32 @@ export default function Dashboard() {
           <>
             {loadingInstructorProfile ? (
               <div className="dashboard-card">Loading profile...</div>
-            ) : !instructorProfileComplete || editingInstructorProfile ? (
+            ) : accessDecision && accessDecision !== "approved" && !editingInstructorProfile ? (
+              renderAccessGate()
+            ) : editingInstructorProfile ? (
               <div className="dashboard-card">
                 <InstructorProfileSetup
                   onSaved={handleInstructorProfileSaved}
                   onCancel={() => setEditingInstructorProfile(false)}
                 />
               </div>
-            ) : accessDecision !== "approved" ? (
-              renderAccessGate()
             ) : (
+              <>
+                {!instructorProfileComplete && (
+                  <div className="dashboard-card">
+                    <h3>Profile incomplete</h3>
+                    <p className="status-note" style={{ marginTop: 8 }}>
+                      You can continue using the dashboard, but completing your profile
+                      helps the admin verify your access.
+                    </p>
+                    <button
+                      style={{ marginTop: 12 }}
+                      onClick={() => setEditingInstructorProfile(true)}
+                    >
+                      Complete Profile
+                    </button>
+                  </div>
+                )}
               <div className="dashboard-grid">
                 <section className="dashboard-card actions-card">
                   <div className="card-header">
@@ -764,28 +874,31 @@ export default function Dashboard() {
                   <div className="profile-grid">
                   <div className="profile-item">
                     <span className="profile-label">Name</span>
-                    <span className="profile-value">{instructorProfile.name}</span>
+                    <span className="profile-value">{instructorProfileSafe.name}</span>
                   </div>
                   <div className="profile-item">
                     <span className="profile-label">Employee ID</span>
-                    <span className="profile-value">{instructorProfile.employee_id}</span>
+                    <span className="profile-value">{instructorProfileSafe.employee_id}</span>
                   </div>
                   <div className="profile-item">
                     <span className="profile-label">Department</span>
-                    <span className="profile-value">{instructorProfile.department}</span>
+                    <span className="profile-value">{instructorProfileSafe.department}</span>
                   </div>
                   <div className="profile-item">
                     <span className="profile-label">Position</span>
-                    <span className="profile-value">{instructorProfile.position}</span>
+                    <span className="profile-value">{instructorProfileSafe.position}</span>
                   </div>
                   <div className="profile-item">
                     <span className="profile-label">Program</span>
-                    <span className="profile-value">{instructorProfile.program}</span>
+                    <span className="profile-value">{instructorProfileSafe.program}</span>
                   </div>
                 </div>
                   <div className="action-grid">
                     <button onClick={() => navigate("/questions")}>Manage Question Bank</button>
-                    <button>View Student Performance</button>
+                   <button onClick={() => navigate("/instructor-performance")}>
+                      View Student Performance
+                   </button>
+
                   </div>
                 </section>
                 <section className="dashboard-card progress-card">
@@ -843,6 +956,68 @@ export default function Dashboard() {
                   </div>
                 </section>
               </div>
+              <div className="dashboard-grid">
+                <section className="dashboard-card results-card">
+                  <div className="card-header">
+                    <h3>LET Enrollment by Major</h3>
+                    <span className="status-note">Registered students</span>
+                  </div>
+                  {classStats?.let_major_counts?.length ? (
+                    <div className="results-list">
+                      {classStats.let_major_counts.map((entry) => (
+                        <div key={entry.major} className="result-row">
+                          <span className="result-label">{entry.major}</span>
+                          <div className="result-bar">
+                            <span
+                              style={{
+                                width: `${Math.min(100, entry.count * 10)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="result-score">{entry.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="history-empty">No LET student data yet.</p>
+                  )}
+                </section>
+                <section className="dashboard-card history-card">
+                  <div className="card-header">
+                    <h3>Recent Exam Attempts</h3>
+                    <span className="status-note">Date & time</span>
+                  </div>
+                  {classStats?.recent_attempts?.length ? (
+                    <div className="history-list">
+                      {classStats.recent_attempts.map((attempt, index) => (
+                        <div
+                          key={`${attempt.email}-${attempt.created_at}-${index}`}
+                          className="history-row"
+                        >
+                          <div>
+                            <p className="history-title">
+                              {attempt.email} • {attempt.exam_type}
+                            </p>
+                            <p className="history-subtitle">
+                              {attempt.major} •{" "}
+                              {attempt.created_at
+                                ? new Date(attempt.created_at).toLocaleString()
+                                : "Unknown time"}
+                            </p>
+                          </div>
+                          <span className="history-score">
+                            {attempt.percentage ?? "-"}% ({attempt.score ?? "-"}/
+                            {attempt.total ?? "-"})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="history-empty">No exam attempts yet.</p>
+                  )}
+                </section>
+              </div>
+              </>
             )}
           </>
         )}
@@ -856,7 +1031,6 @@ export default function Dashboard() {
                 <span className="status-note">System overview</span>
               </div>
               <div className="action-grid">
-                <button onClick={() => navigate("/questions")}>Manage Question Bank</button>
                 <button onClick={() => navigate("/admin")}>Admin Settings</button>
                 <button>Certification Management</button>
                 <button>System Reports</button>
@@ -888,14 +1062,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        <AlertModal
-          isOpen={modal.open}
-          title={modal.title}
-          message={modal.message}
-          type={modal.type}
-          confirmText={modal.confirmText}
-          onConfirm={modal.onConfirm || closeModal}
-        />
       </div>
     </div>
   );

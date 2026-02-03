@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.png";
+import { getSystemLogo } from "../systemLogo";
 
 export default function Register() {
+  const logo = getSystemLogo();
   return (
     <div className="container">
       <div className="card">

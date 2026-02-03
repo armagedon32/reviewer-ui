@@ -216,16 +216,43 @@ export default function Exam() {
     );
   }
 
+  const sectionRank = (section) => {
+    const label = (section || "").toLowerCase();
+    if (label.includes("general education")) return 0;
+    if (label.includes("professional education")) return 1;
+    if (label.startsWith("major:") && !label.includes("(additional")) return 2;
+    if (label.includes("(additional")) return 3;
+    if (label.includes("gened")) return 0;
+    if (label.includes("professional")) return 1;
+    if (label.startsWith("major:")) return 2;
+    return 4;
+  };
+
+  const groupedBySection = questions.reduce((acc, question) => {
+    const key = question.section || "General";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(question);
+    return acc;
+  }, {});
+
+  const orderedSections = Object.keys(groupedBySection).sort(
+    (a, b) => sectionRank(a) - sectionRank(b)
+  );
+
+  const sortedQuestions = orderedSections.flatMap((section) => groupedBySection[section]);
+
   return (
     <div className="exam-page">
       <div className="exam-shell">
         <header className="exam-header">
-          <div>
-            <p className="exam-kicker">Mock Board Exam</p>
-            <h2 className="exam-title">Answer all items</h2>
-            <p className="exam-subtitle">
-              Choose the best answer for each question before submitting.
-            </p>
+          <div className="exam-title-block">
+            <div>
+              <p className="exam-kicker">Mock Board Exam</p>
+              <h2 className="exam-title">Answer all items</h2>
+              <p className="exam-subtitle">
+                Choose the best answer for each question before submitting.
+              </p>
+            </div>
           </div>
           <div className="exam-meta">
             <span className="exam-pill">{questions.length} Questions</span>
@@ -235,10 +262,32 @@ export default function Exam() {
           </div>
         </header>
 
+        <div className="exam-inline-row">
+          <div className="exam-notice-slot">
+            <AlertModal
+              isOpen={modal.open}
+              title={modal.title}
+              message={modal.message}
+              type={modal.type}
+              confirmText={modal.confirmText}
+              onConfirm={modal.onConfirm || closeModal}
+            />
+          </div>
+          <div />
+        </div>
+
         <div className="exam-grid">
           <section className="exam-card exam-questions">
-            {questions.map((q, i) => (
+            {sortedQuestions.map((q, i) => {
+              const prev = sortedQuestions[i - 1];
+              const showSection = q.section && (!prev || prev.section !== q.section);
+              return (
               <div key={q.id} className="exam-question">
+                {showSection && (
+                  <div className="exam-section">
+                    <span className="exam-section-label">{q.section}</span>
+                  </div>
+                )}
                 <div className="exam-question-header">
                   <p className="exam-question-title">
                     {i + 1}. {q.question}
@@ -264,7 +313,8 @@ export default function Exam() {
                   ))}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </section>
 
           <aside className="exam-card exam-sidebar">
@@ -309,14 +359,6 @@ export default function Exam() {
           </aside>
         </div>
       </div>
-      <AlertModal
-        isOpen={modal.open}
-        title={modal.title}
-        message={modal.message}
-        type={modal.type}
-        confirmText={modal.confirmText}
-        onConfirm={modal.onConfirm || closeModal}
-      />
     </div>
   );
 }

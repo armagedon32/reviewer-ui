@@ -78,8 +78,9 @@ export async function startExamApi() {
   return res.json();
 }
 
-export async function getExamStatsApi() {
-  const res = await fetch(`${API_URL}/exam/stats`, {
+export async function getExamStatsApi(program) {
+  const query = program ? `?program=${encodeURIComponent(program)}` : "";
+  const res = await fetch(`${API_URL}/exam/stats${query}`, {
     headers: authHeaders(),
   });
   const data = await res.json().catch(() => ({}));
@@ -204,6 +205,17 @@ export async function listUsersApi() {
     throw new Error(data.detail || "Failed to load users");
   }
   return data;
+}
+
+export async function getExamHistoryApi() {
+  const res = await fetch(`${API_URL}/exam/history`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ([]));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load exam history");
+  }
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createUserApi(payload) {
@@ -358,6 +370,44 @@ export async function uploadQuestionsCsv(file) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.detail || "Failed to upload CSV");
+  }
+  return data;
+}
+
+export async function resetSelectedStudentExamsApi(userIds) {
+  const res = await fetch(`${API_URL}/admin/exams/students/selected`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ user_ids: userIds }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to reset selected exams");
+  }
+  return data;
+}
+
+export async function cleanupQuestionsApi() {
+  const res = await fetch(`${API_URL}/questions/cleanup`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to clean questions");
+  }
+  return data;
+}
+
+export async function updateQuestionApi(questionId, payload) {
+  const res = await fetch(`${API_URL}/questions/${questionId}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to update question");
   }
   return data;
 }

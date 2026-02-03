@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
-import { getAppSettingsApi } from "../api";
+import { getAppSettingsApi, getExamHistoryApi, getProfileApi } from "../api";
 
 const FALLBACK_CONFIG = {
   primaryFocus: "General Education",
@@ -18,14 +18,40 @@ const FALLBACK_CONFIG = {
 export default function ExamPreview() {
   const navigate = useNavigate();
   const user = getUser();
+  const [examHistory, setExamHistory] = useState([]);
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const historyKey = user?.email ? `exam_history_${user.email}` : "exam_history";
+    getExamHistoryApi()
+      .then((data) => {
+        setExamHistory(data);
+        localStorage.setItem(historyKey, JSON.stringify(data));
+        if (data.length === 0) {
+          localStorage.removeItem(historyKey);
+        }
+      })
+      .catch(() => {
+        const stored = localStorage.getItem(historyKey);
+        if (!stored) return;
+        try {
+          setExamHistory(JSON.parse(stored));
+        } catch {
+          setExamHistory([]);
+        }
+      });
+  }, [user?.email]);
+
+  useEffect(() => {
+    getProfileApi()
+      .then((data) => setProfile(data))
+      .catch(() => setProfile(null));
+  }, []);
 
   const config = useMemo(() => {
-    const historyKey = user?.email ? `exam_history_${user.email}` : "exam_history";
-    const stored = localStorage.getItem(historyKey);
-    if (!stored) return FALLBACK_CONFIG;
+    if (!examHistory.length) return FALLBACK_CONFIG;
     try {
-      const history = JSON.parse(stored);
-      const latest = history?.[0];
+      const latest = examHistory?.[0];
       if (!latest || !latest.subject_performance) return FALLBACK_CONFIG;
 
       const subjects = Object.entries(latest.subject_performance).map(
@@ -57,10 +83,22 @@ export default function ExamPreview() {
     } catch {
       return FALLBACK_CONFIG;
     }
-  }, [user?.email]);
+  }, [examHistory]);
 
   const [timeLimit, setTimeLimit] = useState(FALLBACK_CONFIG.timeLimit);
   const [questionCount, setQuestionCount] = useState(FALLBACK_CONFIG.questions);
+  const specialization =
+    profile?.target_licensure === "LET" &&
+    profile?.let_track === "Secondary" &&
+    profile?.major_specialization
+      ? profile.major_specialization
+      : "";
+  const specializationShare = specialization ? 30 : 0;
+  const specializationItems = specialization
+    ? Math.max(1, Math.round(questionCount * (specializationShare / 100)))
+    : 0;
+  const coreShare = specialization ? 100 - specializationShare : 100;
+  const coreItems = specialization ? questionCount - specializationItems : questionCount;
 
   useEffect(() => {
     getAppSettingsApi()
@@ -97,6 +135,18 @@ export default function ExamPreview() {
             <li>
               <strong>Secondary Focus:</strong> {config.secondaryFocus} ({config.secondaryShare}%)
             </li>
+            {specialization && (
+              <>
+                <li>
+                  <strong>Specialization Focus:</strong> {specialization} (
+                  {specializationShare}% • {specializationItems} items)
+                </li>
+                <li>
+                  <strong>Core Coverage:</strong> GenEd + ProfEd ({coreShare}% •{" "}
+                  {coreItems} items)
+                </li>
+              </>
+            )}
             <li>
               <strong>Difficulty Progression:</strong> {config.difficultyFrom} →{" "}
               {config.difficultyTo}

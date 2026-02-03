@@ -4,9 +4,10 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { changePasswordApi } from "../api";
 import { getUser, saveUser } from "../auth";
-import logo from "../assets/logo.png";
+import { getSystemLogo } from "../systemLogo";
 
 export default function ChangePassword() {
+  const logo = getSystemLogo();
   const user = getUser();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -30,6 +31,11 @@ export default function ChangePassword() {
         new_password: newPassword,
       });
       saveUser(data, user?.email);
+      if (user?.email) {
+        localStorage.setItem(`force_profile_setup_${user.email}`, "1");
+      } else {
+        localStorage.setItem("force_profile_setup", "1");
+      }
       navigate("/dashboard");
     } catch (err) {
       setError(err?.message || "Failed to change password");

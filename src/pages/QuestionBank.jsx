@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createQuestionApi, listQuestionsApi, uploadQuestionsCsv, clearQuestionsApi } from "../api";
+import {
+  createQuestionApi,
+  listQuestionsApi,
+  uploadQuestionsCsv,
+  clearQuestionsApi,
+  cleanupQuestionsApi,
+} from "../api";
 import Button from "../components/Button";
-import AlertModal from "../components/AlertModal";
+import InlineNotice from "../components/InlineNotice";
 
 const defaultForm = {
   exam_type: "LET",
@@ -23,41 +29,33 @@ export default function QuestionBank() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [filter, setFilter] = useState("");
-  const [modal, setModal] = useState({
-    open: false,
-    title: "",
-    message: "",
-    type: "success",
-    confirmText: "Close",
-    onConfirm: null,
-  });
+  const [notice, setNotice] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
 
   const navigate = useNavigate();
 
-  const closeModal = () =>
-    setModal((prev) => ({
-      ...prev,
-      open: false,
-    }));
+  const showNotice = (next) => setNotice(next);
+  const clearNotice = () => setNotice(null);
 
   const loadQuestions = async () => {
     setFetching(true);
     try {
       const data = await listQuestionsApi();
       setQuestions(data || []);
+      clearNotice();
     } catch (err) {
-      setModal({
-        open: true,
+      showNotice({
+        type: "error",
         title: "Cannot load questions",
         message: err?.message || "Please try again later.",
-        type: "error",
-        confirmText: "Back",
-        onConfirm: () => {
-          closeModal();
-          navigate("/dashboard");
-        },
+        actions: [
+          {
+            label: "Back",
+            onClick: () => navigate("/dashboard"),
+          },
+        ],
       });
     } finally {
       setFetching(false);
@@ -78,25 +76,22 @@ export default function QuestionBank() {
     try {
       await createQuestionApi(form);
       setForm(defaultForm);
-      setModal({
-        open: true,
+      showNotice({
+        type: "success",
         title: "Question added",
         message: "The question has been saved to the bank.",
-        type: "success",
-        confirmText: "Great",
-        onConfirm: () => {
-          closeModal();
-          loadQuestions();
-        },
+        actions: [
+          {
+            label: "Refresh list",
+            onClick: () => loadQuestions(),
+          },
+        ],
       });
     } catch (err) {
-      setModal({
-        open: true,
+      showNotice({
+        type: "error",
         title: "Add failed",
         message: err?.message || "Please check the fields and try again.",
-        type: "error",
-        confirmText: "Close",
-        onConfirm: closeModal,
       });
     } finally {
       setLoading(false);
@@ -104,64 +99,120 @@ export default function QuestionBank() {
   };
 
   const handleUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
     setUploading(true);
-    try {
-      const result = await uploadQuestionsCsv(file);
-      setModal({
-        open: true,
-        title: "Upload complete",
-        message: `Added ${result.added || 0} questions from CSV.`,
-        type: "success",
-        confirmText: "Refresh list",
-        onConfirm: () => {
-          closeModal();
-          loadQuestions();
-        },
-      });
-    } catch (err) {
-      setModal({
-        open: true,
-        title: "Upload failed",
-        message: err?.message || "Please check your file and try again.",
-        type: "error",
-        confirmText: "Close",
-        onConfirm: closeModal,
-      });
-    } finally {
-      setUploading(false);
-      e.target.value = "";
+    let addedTotal = 0;
+    let skippedTotal = 0;
+    let failed = 0;
+    for (const file of files) {
+      try {
+        const result = await uploadQuestionsCsv(file);
+        addedTotal += result.added || 0;
+        skippedTotal += result.skipped || 0;
+      } catch {
+        failed += 1;
+      }
     }
+
+    showNotice({
+      type: failed ? "warning" : "success",
+      title: failed ? "Upload completed with errors" : "Upload complete",
+      message: failed
+        ? `Added ${addedTotal} questions. Failed to upload ${failed} file(s).`
+        : `Added ${addedTotal} questions from ${files.length} file(s).${skippedTotal ? ` Skipped ${skippedTotal} invalid row(s).` : ""}`,
+      actions: [
+        {
+          label: "Refresh list",
+          onClick: () => loadQuestions(),
+        },
+      ],
+    });
+
+    setUploading(false);
+    e.target.value = "";
   };
 
   const handleClearAll = () => {
-    setModal({
-      open: true,
+    showNotice({
+      type: "warning",
       title: "Delete all questions?",
       message: "This will remove every question in the bank. This action cannot be undone.",
-      type: "error",
-      confirmText: "Delete all",
-      onConfirm: async () => {
-        try {
-          setClearing(true);
-          await clearQuestionsApi();
-          closeModal();
-          await loadQuestions();
-        } catch (err) {
-          setModal({
-            open: true,
-            title: "Delete failed",
-            message: err?.message || "Unable to delete questions.",
-            type: "error",
-            confirmText: "Close",
-            onConfirm: closeModal,
-          });
-        } finally {
-          setClearing(false);
-        }
-      },
+      actions: [
+        {
+          label: clearing ? "Deleting..." : "Delete all",
+          onClick: async () => {
+            try {
+              setClearing(true);
+              await clearQuestionsApi();
+              showNotice({
+                type: "success",
+                title: "Questions deleted",
+                message: "The question bank is now empty.",
+              });
+              await loadQuestions();
+            } catch (err) {
+              showNotice({
+                type: "error",
+                title: "Delete failed",
+                message: err?.message || "Unable to delete questions.",
+              });
+            } finally {
+              setClearing(false);
+            }
+          },
+        },
+        {
+          label: "Cancel",
+          onClick: () => clearNotice(),
+        },
+      ],
+    });
+  };
+
+  const handleCleanup = () => {
+    showNotice({
+      type: "warning",
+      title: "Clean question text?",
+      message:
+        "This will remove watermark text and truncate appended question numbers in all saved questions.",
+      actions: [
+        {
+          label: cleaning ? "Cleaning..." : "Run cleanup",
+          onClick: async () => {
+            try {
+              setCleaning(true);
+              const result = await cleanupQuestionsApi();
+              const updatedCount = result.updated || 0;
+              const deletedCount = result.deleted || 0;
+              showNotice({
+                type: "success",
+                title: "Cleanup complete",
+                message: `Updated ${updatedCount} question(s). Removed ${deletedCount} invalid question(s).`,
+                actions: [
+                  {
+                    label: "Refresh list",
+                    onClick: () => loadQuestions(),
+                  },
+                ],
+              });
+            } catch (err) {
+              showNotice({
+                type: "error",
+                title: "Cleanup failed",
+                message: err?.message || "Unable to clean questions.",
+              });
+            } finally {
+              setCleaning(false);
+            }
+          },
+        },
+        {
+          label: "Cancel",
+          onClick: () => clearNotice(),
+        },
+      ],
     });
   };
 
@@ -176,6 +227,18 @@ export default function QuestionBank() {
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => navigate("/instructor-exam-preview")}
+              style={{
+                width: "auto",
+                background: "#1e293b",
+                padding: "10px 14px",
+                borderRadius: "999px",
+              }}
+            >
+              Preview Exam Sheet
+            </button>
             <button
               type="button"
               onClick={() => navigate("/dashboard")}
@@ -204,7 +267,13 @@ export default function QuestionBank() {
                   Download template
                 </a>
               </div>
-              <input type="file" accept=".csv" onChange={handleUpload} disabled={uploading} />
+              <input
+                type="file"
+                accept=".csv"
+                multiple
+                onChange={handleUpload}
+                disabled={uploading}
+              />
               <p className="panel-helper">
                 Difficulty must be Easy, Medium, or Hard. Answer must be A, B, C, or D.
               </p>
@@ -222,6 +291,20 @@ export default function QuestionBank() {
                   onChange={(e) => setFilter(e.target.value)}
                   style={{ flex: 1 }}
                 />
+                <button
+                  type="button"
+                  onClick={handleCleanup}
+                  disabled={cleaning || fetching || questions.length === 0}
+                  style={{
+                    width: "auto",
+                    background: "#f59e0b",
+                    color: "white",
+                    padding: "10px 14px",
+                    borderRadius: "6px",
+                  }}
+                >
+                  {cleaning ? "Cleaning..." : "Clean text"}
+                </button>
                 <button
                   type="button"
                   onClick={handleClearAll}
@@ -268,8 +351,15 @@ export default function QuestionBank() {
           </div>
 
           <div className="question-panel">
-            <div className="panel-box">
+            <div className="panel-box panel-box--relative">
               <div className="panel-title">Add question</div>
+              <InlineNotice
+                type={notice?.type}
+                title={notice?.title}
+                message={notice?.message}
+                actions={notice?.actions || []}
+                onClose={notice ? clearNotice : null}
+              />
               <form onSubmit={handleSubmit}>
                 <label>Exam Type</label>
                 <select
@@ -348,15 +438,6 @@ export default function QuestionBank() {
           </div>
         </div>
       </div>
-
-      <AlertModal
-        isOpen={modal.open}
-        title={modal.title}
-        message={modal.message}
-        type={modal.type}
-        confirmText={modal.confirmText}
-        onConfirm={modal.onConfirm || closeModal}
-      />
     </div>
   );
 }
