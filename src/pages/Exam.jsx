@@ -89,6 +89,7 @@ export default function Exam() {
       .catch(() => {});
   }, []);
 
+
   useEffect(() => {
     if (loading || !questions.length) return;
     setTimeLeft(timeLimitMinutes * 60);

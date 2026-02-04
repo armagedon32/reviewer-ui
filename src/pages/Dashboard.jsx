@@ -372,6 +372,17 @@ export default function Dashboard() {
   const performanceTrend = examHistory
     .slice(0, 7)
     .reverse();
+  const performanceTrendDelta = performanceTrend.length
+    ? performanceTrend[performanceTrend.length - 1].percentage - performanceTrend[0].percentage
+    : 0;
+  const performanceTrendDirection =
+    performanceTrendDelta > 0 ? "up" : performanceTrendDelta < 0 ? "down" : "flat";
+  const performanceTrendLabel =
+    performanceTrendDirection === "up"
+      ? "Improving"
+      : performanceTrendDirection === "down"
+        ? "Declining"
+        : "Steady";
   const classTrend = (classStats?.recent_scores || []).map((score, index) => ({
     date: new Date(Date.now() - (classStats.recent_scores.length - index - 1) * 86400000),
     percentage: Math.round(score),
@@ -657,21 +668,81 @@ export default function Dashboard() {
                     </div>
                     <div className="trend-graph">
                       {performanceTrend.length ? (
-                        performanceTrend.map((entry, index) => (
-                          <div key={`${entry.date}-${index}`} className="trend-column">
-                            <div
-                              className="trend-bar"
-                              style={{
-                                height: `${entry.percentage}%`,
-                                ...trendStyleFor(entry.percentage),
-                              }}
-                              title={`${entry.percentage}%`}
+                        <div className={`trend-sparkline ${performanceTrendDirection}`}>
+                          <svg
+                            viewBox="0 0 220 90"
+                            role="img"
+                            aria-label="Student performance trend"
+                            preserveAspectRatio="none"
+                          >
+                            <defs>
+                              <linearGradient id="studentTrendLine" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#0ea5e9" />
+                                <stop offset="100%" stopColor="#22c55e" />
+                              </linearGradient>
+                              <linearGradient id="studentTrendFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="rgba(14, 165, 233, 0.35)" />
+                                <stop offset="100%" stopColor="rgba(34, 197, 94, 0.05)" />
+                              </linearGradient>
+                            </defs>
+                            <path
+                              className="trend-area"
+                              d={`M 0 85 ${performanceTrend
+                                .map((entry, index) => {
+                                  const x = (index / (performanceTrend.length - 1 || 1)) * 220;
+                                  const y = 85 - (entry.percentage / 100) * 70;
+                                  return `L ${x} ${y}`;
+                                })
+                                .join(" ")} L 220 85 Z`}
+                              fill="url(#studentTrendFill)"
                             />
+                            <polyline
+                              className="trend-line"
+                              fill="none"
+                              stroke="url(#studentTrendLine)"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              points={performanceTrend
+                                .map((entry, index) => {
+                                  const x = (index / (performanceTrend.length - 1 || 1)) * 220;
+                                  const y = 85 - (entry.percentage / 100) * 70;
+                                  return `${x},${y}`;
+                                })
+                                .join(" ")}
+                            />
+                            {performanceTrend.map((entry, index) => {
+                              const x = (index / (performanceTrend.length - 1 || 1)) * 220;
+                              const y = 85 - (entry.percentage / 100) * 70;
+                              return (
+                                <circle
+                                  key={`${entry.date}-${index}`}
+                                  cx={x}
+                                  cy={y}
+                                  r="3.5"
+                                  className="trend-dot"
+                                />
+                              );
+                            })}
+                          </svg>
+                          <div className="trend-footer">
                             <span className="trend-label">
-                              {new Date(entry.date).toLocaleDateString()}
+                              {new Date(performanceTrend[0].date).toLocaleDateString()}
+                            </span>
+                            <span className="trend-note">
+                              {performanceTrendLabel}
+                              <strong>
+                                {performanceTrendDelta > 0 ? "+" : ""}
+                                {performanceTrendDelta}%
+                              </strong>
+                            </span>
+                            <span className="trend-label">
+                              {new Date(
+                                performanceTrend[performanceTrend.length - 1].date
+                              ).toLocaleDateString()}
                             </span>
                           </div>
-                        ))
+                        </div>
                       ) : (
                         <div className="trend-empty">No exam data yet</div>
                       )}
