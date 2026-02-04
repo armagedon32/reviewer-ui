@@ -995,10 +995,6 @@ button:disabled {
 }
 
 .trend-graph {
-  height: 120px;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
   padding: 6px 0 4px;
   border-bottom: 1px solid var(--border);
 }
@@ -1029,6 +1025,64 @@ button:disabled {
   color: #64748b;
 }
 
+.trend-sparkline {
+  display: grid;
+  gap: 10px;
+}
+
+.trend-sparkline svg {
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.03), rgba(15, 23, 42, 0));
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.trend-line {
+  filter: drop-shadow(0 6px 12px rgba(14, 165, 233, 0.2));
+}
+
+.trend-dot {
+  fill: #0f172a;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.trend-sparkline.up .trend-line {
+  stroke: #22c55e;
+}
+
+.trend-sparkline.down .trend-line {
+  stroke: #ef4444;
+}
+
+.trend-sparkline.flat .trend-line {
+  stroke: #94a3b8;
+}
+
+.trend-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.trend-note {
+  font-size: 12px;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px 10px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.trend-note strong {
+  font-weight: 700;
+}
+
 .trend-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1043,16 +1097,49 @@ button:disabled {
   border: 1px solid var(--border);
 }
 
+.active-users-card .metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.active-users-card .metric-label {
+  flex: 1;
+}
+
 .metric-label {
   font-size: 12px;
   color: #64748b;
   display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .metric-value {
   font-size: 16px;
   font-weight: 700;
   color: #0f172a;
+}
+
+.metric-icon {
+  width: 14px;
+  height: 14px;
+  fill: #64748b;
+  flex-shrink: 0;
+}
+
+.metric-icon.role-admin {
+  fill: #1d4ed8;
+}
+
+.metric-icon.role-instructor {
+  fill: #0ea5e9;
+}
+
+.metric-icon.role-student {
+  fill: #16a34a;
 }
 
 .action-grid {

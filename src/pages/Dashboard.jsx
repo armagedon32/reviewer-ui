@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
-import { getAccessStatusApi, getExamHistoryApi, getExamStatsApi, getProfileApi, requestAccessApi } from "../api";
+import {
+  getAccessStatusApi,
+  getExamHistoryApi,
+  getExamStatsApi,
+  getProfileApi,
+  listUsersApi,
+  requestAccessApi,
+} from "../api";
 import ProfileSetup from "./ProfileSetup";
 import InstructorProfileSetup from "./InstructorProfileSetup";
 import AlertModal from "../components/AlertModal";
@@ -21,6 +28,7 @@ export default function Dashboard() {
   const [accessRequest, setAccessRequest] = useState(null);
   const [examHistory, setExamHistory] = useState([]);
   const [classStats, setClassStats] = useState(null);
+  const [activeUserCounts, setActiveUserCounts] = useState(null);
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -227,6 +235,27 @@ export default function Dashboard() {
       .catch(() => setClassStats(null));
   }, [user.role, instructorProfile?.program]);
 
+  useEffect(() => {
+    if (user.role !== "admin") return;
+    listUsersApi()
+      .then((users) => {
+        const counts = {
+          admin: 0,
+          instructor: 0,
+          student: 0,
+        };
+        users
+          .filter((entry) => entry.active)
+          .forEach((entry) => {
+            if (counts[entry.role] !== undefined) {
+              counts[entry.role] += 1;
+            }
+          });
+        setActiveUserCounts(counts);
+      })
+      .catch(() => setActiveUserCounts(null));
+  }, [user.role]);
+
   const latestExam = examHistory[0] || null;
   const latestSubjects = latestExam?.subject_performance || {};
   const subjectBreakdown = Object.keys(latestSubjects).length
@@ -347,6 +376,17 @@ export default function Dashboard() {
     date: new Date(Date.now() - (classStats.recent_scores.length - index - 1) * 86400000),
     percentage: Math.round(score),
   }));
+  const classTrendDelta = classTrend.length
+    ? classTrend[classTrend.length - 1].percentage - classTrend[0].percentage
+    : 0;
+  const classTrendDirection =
+    classTrendDelta > 0 ? "up" : classTrendDelta < 0 ? "down" : "flat";
+  const classTrendLabel =
+    classTrendDirection === "up"
+      ? "Improving"
+      : classTrendDirection === "down"
+        ? "Declining"
+        : "Steady";
 
   const averageScore = examHistory.length
     ? Math.round(
@@ -912,24 +952,79 @@ export default function Dashboard() {
                   </div>
                   <div className="trend-graph">
                     {classTrend.length ? (
-                      classTrend.map((entry, index) => (
-                        <div
-                          key={`${entry.date}-${index}`}
-                          className="trend-column"
+                      <div className={`trend-sparkline ${classTrendDirection}`}>
+                        <svg
+                          viewBox="0 0 220 90"
+                          role="img"
+                          aria-label="Class performance trend"
+                          preserveAspectRatio="none"
                         >
-                          <div
-                            className="trend-bar"
-                            style={{
-                              height: `${entry.percentage}%`,
-                              ...trendStyleFor(entry.percentage),
-                            }}
-                            title={`${entry.percentage}%`}
+                          <defs>
+                            <linearGradient id="trendLine" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#0ea5e9" />
+                              <stop offset="100%" stopColor="#22c55e" />
+                            </linearGradient>
+                            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="rgba(14, 165, 233, 0.35)" />
+                              <stop offset="100%" stopColor="rgba(34, 197, 94, 0.05)" />
+                            </linearGradient>
+                          </defs>
+                          <path
+                            className="trend-area"
+                            d={`M 0 85 ${classTrend
+                              .map((entry, index) => {
+                                const x = (index / (classTrend.length - 1 || 1)) * 220;
+                                const y = 85 - (entry.percentage / 100) * 70;
+                                return `L ${x} ${y}`;
+                              })
+                              .join(" ")} L 220 85 Z`}
+                            fill="url(#trendFill)"
                           />
+                          <polyline
+                            className="trend-line"
+                            fill="none"
+                            stroke="url(#trendLine)"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            points={classTrend
+                              .map((entry, index) => {
+                                const x = (index / (classTrend.length - 1 || 1)) * 220;
+                                const y = 85 - (entry.percentage / 100) * 70;
+                                return `${x},${y}`;
+                              })
+                              .join(" ")}
+                          />
+                          {classTrend.map((entry, index) => {
+                            const x = (index / (classTrend.length - 1 || 1)) * 220;
+                            const y = 85 - (entry.percentage / 100) * 70;
+                            return (
+                              <circle
+                                key={`${entry.date}-${index}`}
+                                cx={x}
+                                cy={y}
+                                r="3.5"
+                                className="trend-dot"
+                              />
+                            );
+                          })}
+                        </svg>
+                        <div className="trend-footer">
                           <span className="trend-label">
-                            {entry.date.toLocaleDateString()}
+                            {classTrend[0].date.toLocaleDateString()}
+                          </span>
+                          <span className="trend-note">
+                            {classTrendLabel}
+                            <strong>
+                              {classTrendDelta > 0 ? "+" : ""}
+                              {classTrendDelta}%
+                            </strong>
+                          </span>
+                          <span className="trend-label">
+                            {classTrend[classTrend.length - 1].date.toLocaleDateString()}
                           </span>
                         </div>
-                      ))
+                      </div>
                     ) : (
                       <div className="trend-empty">No class data yet</div>
                     )}
@@ -1057,6 +1152,62 @@ export default function Dashboard() {
                 <p className="highlight-text">
                   System uptime at 99.9% with steady exam submissions.
                 </p>
+              </div>
+            </section>
+            <section className="dashboard-card active-users-card">
+              <div className="card-header">
+                <h3>Active Users</h3>
+                <span className="status-note">Currently active</span>
+              </div>
+              <div className="trend-metrics">
+                <div className="metric">
+                  <span className="metric-label">
+                    <svg
+                      className="metric-icon role-admin"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 3a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm0 9c4.2 0 7.5 2.3 7.5 5v2H4.5v-2c0-2.7 3.3-5 7.5-5Z" />
+                      <path d="M6 6.5 8 5l-1-2 2.2 1 .8-2 1 2.1 2.2-1-1 2 2 1.5-2.3.2-.7 2-1-1.9-2.2 1 .9-2.2L6 6.5Z" />
+                    </svg>
+                    Admins
+                  </span>
+                  <span className="metric-value">
+                    {activeUserCounts ? activeUserCounts.admin : "-"}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">
+                    <svg
+                      className="metric-icon role-instructor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="M4 6.5 12 3l8 3.5-8 3.5L4 6.5Z" />
+                      <path d="M6 10v4.2c0 2 3 3.8 6 3.8s6-1.8 6-3.8V10l-6 2.6L6 10Z" />
+                      <path d="M20 9v5a2 2 0 0 1-2 2h-1v-2h1V9h2Z" />
+                    </svg>
+                    Instructors
+                  </span>
+                  <span className="metric-value">
+                    {activeUserCounts ? activeUserCounts.instructor : "-"}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">
+                    <svg
+                      className="metric-icon role-student"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 3a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm-7 15c0-3 3.1-5 7-5s7 2 7 5v2H5v-2Z" />
+                    </svg>
+                    Students
+                  </span>
+                  <span className="metric-value">
+                    {activeUserCounts ? activeUserCounts.student : "-"}
+                  </span>
+                </div>
               </div>
             </section>
           </div>
