@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
-import { getExamHistoryApi, getProfileApi } from "../api";
+import { getAppSettingsApi, getExamHistoryApi, getProfileApi } from "../api";
 import { getSystemLogo } from "../systemLogo";
 
 export default function Analytics() {
@@ -10,6 +10,7 @@ export default function Analytics() {
   const user = getUser();
   const [profile, setProfile] = useState(null);
   const [examHistory, setExamHistory] = useState([]);
+  const [appSettings, setAppSettings] = useState(null);
 
   useEffect(() => {
     const historyKey = user?.email ? `exam_history_${user.email}` : "exam_history";
@@ -38,6 +39,12 @@ export default function Analytics() {
       .catch(() => setProfile(null));
   }, []);
 
+  useEffect(() => {
+    getAppSettingsApi()
+      .then((data) => setAppSettings(data))
+      .catch(() => setAppSettings(null));
+  }, []);
+
   const latestExam = examHistory[0] || null;
   const latestSubjects = latestExam?.subject_performance || {};
   const subjectBreakdown = Object.keys(latestSubjects).length
@@ -54,6 +61,17 @@ export default function Analytics() {
       date: entry.date,
       percentage: entry.percentage,
     }));
+  const performanceTrendDelta = performanceTrend.length
+    ? performanceTrend[performanceTrend.length - 1].percentage - performanceTrend[0].percentage
+    : 0;
+  const performanceTrendDirection =
+    performanceTrendDelta > 0 ? "up" : performanceTrendDelta < 0 ? "down" : "flat";
+  const performanceTrendLabel =
+    performanceTrendDirection === "up"
+      ? "Improving"
+      : performanceTrendDirection === "down"
+        ? "Declining"
+        : "Steady";
 
   const totalAttempts = examHistory.length;
   const passCount = examHistory.filter((entry) => entry.result === "PASS").length;
@@ -63,19 +81,39 @@ export default function Analytics() {
         examHistory.reduce((sum, entry) => sum + entry.percentage, 0) / totalAttempts
       )
     : 0;
+  const requiredThreshold =
+    typeof profile?.required_passing_threshold === "number"
+      ? profile.required_passing_threshold
+      : typeof appSettings?.passing_threshold_default === "number"
+        ? appSettings.passing_threshold_default
+        : 75;
+  const masteryThreshold =
+    typeof appSettings?.mastery_threshold === "number" ? appSettings.mastery_threshold : 90;
+  const developingThreshold = Math.max(0, masteryThreshold - 15);
+  const guidedThreshold = Math.max(0, masteryThreshold - 30);
+  const exploratoryThreshold = Math.max(0, masteryThreshold - 45);
+  const passStreakIndex = examHistory.length
+    ? examHistory.findIndex((entry) => entry.result !== "PASS")
+    : -1;
+  const passStreakCount = passStreakIndex === -1 ? examHistory.length : passStreakIndex;
+  const streakQualified = passStreakCount >= 5;
+  const latestQualified =
+    latestExam && typeof latestExam.percentage === "number"
+      ? latestExam.percentage >= masteryThreshold
+      : false;
   const badge =
     latestExam && typeof latestExam.percentage === "number"
-      ? latestExam.percentage >= 90
+      ? latestExam.percentage >= masteryThreshold
         ? {
             color: "green",
             label: "Mastery",
             note: "Ready for certification / mock board pass",
           }
-        : latestExam.percentage >= 75
+        : latestExam.percentage >= developingThreshold
           ? { color: "yellow", label: "Developing", note: "Needs targeted review" }
-          : latestExam.percentage >= 60
+          : latestExam.percentage >= guidedThreshold
             ? { color: "orange", label: "Guided", note: "Requires structured intervention" }
-            : latestExam.percentage >= 40
+            : latestExam.percentage >= exploratoryThreshold
               ? { color: "blue", label: "Exploratory", note: "Early-stage learning" }
               : { color: "red", label: "Struggling", note: "Immediate remediation" }
       : null;
@@ -103,7 +141,7 @@ export default function Analytics() {
   const readinessHigh = projectedScores.length ? Math.max(...projectedScores) : latestScore;
 
   const trendStyleFor = (percentage) => {
-    if (percentage >= 90) {
+    if (percentage >= masteryThreshold) {
       return {
         background: "linear-gradient(180deg, #16a34a, #4ade80)",
         boxShadow: "0 8px 18px rgba(22, 163, 74, 0.25)",
@@ -151,6 +189,23 @@ export default function Analytics() {
             Back to Dashboard
           </button>
         </div>
+        {(streakQualified || latestQualified) && (
+          <section className="dashboard-card">
+            <div className="card-header">
+              <h3>Performance Milestone</h3>
+              <span className="status-pill pass">Ready</span>
+            </div>
+            <p className="status-note" style={{ marginTop: 8 }}>
+              {streakQualified
+                ? `Congratulations! You passed ${passStreakCount} consecutive ${profile?.target_licensure || "licensure"} mock exams with ≥${requiredThreshold}%.`
+                : `Congratulations! You reached the target score of ${requiredThreshold}% in your latest mock exam.`}
+            </p>
+            <p className="status-note" style={{ marginTop: 6 }}>
+              You are now marked as READY to take the{" "}
+              {profile?.target_licensure || "licensure"} examination.
+            </p>
+          </section>
+        )}
 
         <section className="dashboard-card">
           <div className="card-header">
@@ -237,7 +292,9 @@ export default function Analytics() {
               <p className="analytics-value">
                 {profile?.required_passing_threshold
                   ? `${profile.required_passing_threshold}%`
-                  : "90%"}
+                  : typeof appSettings?.passing_threshold_default === "number"
+                    ? `${appSettings.passing_threshold_default}%`
+                    : "75%"}
               </p>
             </div>
           </div>
@@ -253,21 +310,81 @@ export default function Analytics() {
             </div>
             <div className="trend-graph">
               {performanceTrend.length ? (
-                performanceTrend.map((entry, index) => (
-                  <div key={`${entry.date}-${index}`} className="trend-column">
-                    <div
-                      className="trend-bar"
-                      style={{
-                        height: `${entry.percentage}%`,
-                        ...trendStyleFor(entry.percentage),
-                      }}
-                      title={`${entry.percentage}%`}
+                <div className={`trend-sparkline ${performanceTrendDirection}`}>
+                  <svg
+                    viewBox="0 0 220 90"
+                    role="img"
+                    aria-label="Student performance trend"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="analyticsTrendLine" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#0ea5e9" />
+                        <stop offset="100%" stopColor="#22c55e" />
+                      </linearGradient>
+                      <linearGradient id="analyticsTrendFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="rgba(14, 165, 233, 0.35)" />
+                        <stop offset="100%" stopColor="rgba(34, 197, 94, 0.05)" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      className="trend-area"
+                      d={`M 0 85 ${performanceTrend
+                        .map((entry, index) => {
+                          const x = (index / (performanceTrend.length - 1 || 1)) * 220;
+                          const y = 85 - (entry.percentage / 100) * 70;
+                          return `L ${x} ${y}`;
+                        })
+                        .join(" ")} L 220 85 Z`}
+                      fill="url(#analyticsTrendFill)"
                     />
+                    <polyline
+                      className="trend-line"
+                      fill="none"
+                      stroke="url(#analyticsTrendLine)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={performanceTrend
+                        .map((entry, index) => {
+                          const x = (index / (performanceTrend.length - 1 || 1)) * 220;
+                          const y = 85 - (entry.percentage / 100) * 70;
+                          return `${x},${y}`;
+                        })
+                        .join(" ")}
+                    />
+                    {performanceTrend.map((entry, index) => {
+                      const x = (index / (performanceTrend.length - 1 || 1)) * 220;
+                      const y = 85 - (entry.percentage / 100) * 70;
+                      return (
+                        <circle
+                          key={`${entry.date}-${index}`}
+                          cx={x}
+                          cy={y}
+                          r="3.5"
+                          className="trend-dot"
+                        />
+                      );
+                    })}
+                  </svg>
+                  <div className="trend-footer">
                     <span className="trend-label">
-                      {new Date(entry.date).toLocaleDateString()}
+                      {new Date(performanceTrend[0].date).toLocaleDateString()}
+                    </span>
+                    <span className="trend-note">
+                      {performanceTrendLabel}
+                      <strong>
+                        {performanceTrendDelta > 0 ? "+" : ""}
+                        {performanceTrendDelta}%
+                      </strong>
+                    </span>
+                    <span className="trend-label">
+                      {new Date(
+                        performanceTrend[performanceTrend.length - 1].date
+                      ).toLocaleDateString()}
                     </span>
                   </div>
-                ))
+                </div>
               ) : (
                 <div className="trend-empty">No exam data yet</div>
               )}
@@ -285,7 +402,7 @@ export default function Analytics() {
               </div>
               <div className="metric">
                 <span className="metric-label">Target</span>
-                <span className="metric-value">90%</span>
+                <span className="metric-value">{`${requiredThreshold}%`}</span>
               </div>
             </div>
           </section>
@@ -312,7 +429,7 @@ export default function Analytics() {
                   <p className="highlight-title">Focus Area</p>
                   <p className="highlight-text">
                     Because your {weakestSubject?.label} accuracy (
-                    {weakestSubject?.value ?? 0}%) is below the 90% mastery threshold,
+                    {weakestSubject?.value ?? 0}%) is below the {masteryThreshold}% mastery threshold,
                     the system recommends focused remediation in this area.
                   </p>
                 </div>

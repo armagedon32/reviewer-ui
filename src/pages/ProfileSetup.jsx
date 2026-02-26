@@ -1,21 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { getProfileApi, requestAccessApi, saveProfileApi } from "../api";
+import { getAppSettingsApi, getProfileApi, requestAccessApi, saveProfileApi } from "../api";
 import { getUser } from "../auth";
-
-const LICENSURE_RULES = {
-  LET: {
-    subjects: ["GenEd", "ProfEd", "Specialization"],
-    passingThreshold: 75,
-  },
-  CPA: {
-    subjects: ["FAR", "AFAR", "Auditing", "MAS", "RFBT", "Taxation"],
-    passingThreshold: 75,
-  },
-  "Internal Certification": {
-    subjects: ["Core", "Applied", "Practicum"],
-    passingThreshold: 80,
-  },
-};
+import { DEFAULT_TARGET_LICENSURE_OPTIONS } from "../licensureDefaults";
 
 export default function ProfileSetup({ onSaved, onCancel }) {
   const user = getUser();
@@ -33,9 +19,9 @@ export default function ProfileSetup({ onSaved, onCancel }) {
   const [letTrack, setLetTrack] = useState("Elementary");
   const [majorSpecialization, setMajorSpecialization] = useState("");
   const [assignedReviewSubjects, setAssignedReviewSubjects] = useState([]);
-  const [requiredPassingThreshold, setRequiredPassingThreshold] = useState(
-    LICENSURE_RULES.LET.passingThreshold
-  );
+  const [requiredPassingThreshold, setRequiredPassingThreshold] = useState(75);
+  const [appSettings, setAppSettings] = useState(null);
+  const [licensureOptions, setLicensureOptions] = useState(DEFAULT_TARGET_LICENSURE_OPTIONS);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -48,7 +34,39 @@ export default function ProfileSetup({ onSaved, onCancel }) {
   }, [user?.email, emailAddress]);
 
   useEffect(() => {
-    const rule = LICENSURE_RULES[targetLicensure];
+    getAppSettingsApi()
+      .then((data) => {
+        setAppSettings(data);
+        const options =
+          Array.isArray(data?.target_licensure_options) && data.target_licensure_options.length
+            ? data.target_licensure_options
+            : DEFAULT_TARGET_LICENSURE_OPTIONS;
+        setLicensureOptions(options);
+      })
+      .catch(() => setAppSettings(null));
+  }, []);
+
+  const ruleMap = licensureOptions.reduce((acc, option) => {
+    const name = String(option?.name || "").trim();
+    const subjects = Array.isArray(option?.subjects)
+      ? option.subjects.filter(Boolean)
+      : [];
+    if (!name || !subjects.length) return acc;
+    acc[name] = {
+      subjects,
+      passingThreshold: Number(option?.passing_threshold ?? 75),
+    };
+    return acc;
+  }, {});
+
+  const activeRule =
+    ruleMap[targetLicensure] ||
+    ruleMap.LET ||
+    Object.values(ruleMap)[0] ||
+    { subjects: [], passingThreshold: 75 };
+
+  useEffect(() => {
+    const rule = activeRule;
     if (!rule) return;
     const baseSubjects = rule.subjects;
     let subjects = baseSubjects;
@@ -60,7 +78,14 @@ export default function ProfileSetup({ onSaved, onCancel }) {
       const filtered = prev.filter((subject) => subjects.includes(subject));
       return filtered.length ? filtered : subjects;
     });
-  }, [targetLicensure, letTrack]);
+  }, [targetLicensure, letTrack, activeRule]);
+
+  useEffect(() => {
+    if (!ruleMap[targetLicensure]) {
+      const fallback = licensureOptions[0]?.name || "LET";
+      setTargetLicensure(fallback);
+    }
+  }, [licensureOptions, targetLicensure, ruleMap]);
 
   useEffect(() => {
     (async () => {
@@ -80,16 +105,15 @@ export default function ProfileSetup({ onSaved, onCancel }) {
         setLetTrack(existing.let_track || "Elementary");
         setMajorSpecialization(existing.major_specialization || "");
         setAssignedReviewSubjects(existing.assigned_review_subjects || []);
-        setRequiredPassingThreshold(
-          existing.required_passing_threshold ||
-            LICENSURE_RULES[existing.target_licensure || "LET"].passingThreshold
-        );
+        const savedRule = ruleMap[existing.target_licensure || "LET"];
+        const fallbackThreshold = savedRule?.passingThreshold ?? 75;
+        setRequiredPassingThreshold(existing.required_passing_threshold || fallbackThreshold);
         initialProfileRef.current = existing;
       } else {
         initialProfileRef.current = null;
       }
     })();
-  }, [user?.email]);
+  }, [user?.email, appSettings, ruleMap]);
 
   async function handleSave(e) {
     e.preventDefault();
@@ -168,7 +192,7 @@ export default function ProfileSetup({ onSaved, onCancel }) {
     }
   }
 
-  const rule = LICENSURE_RULES[targetLicensure];
+  const rule = activeRule;
   const availableSubjects =
     targetLicensure === "LET" && letTrack === "Elementary"
       ? rule.subjects.filter((subject) => subject !== "Specialization")
@@ -232,9 +256,11 @@ export default function ProfileSetup({ onSaved, onCancel }) {
 
         <label>Target Licensure / Certification</label>
         <select value={targetLicensure} onChange={(e) => setTargetLicensure(e.target.value)}>
-          <option value="LET">LET</option>
-          <option value="CPA">CPA</option>
-          <option value="Internal Certification">Internal Certification</option>
+          {licensureOptions.map((option) => (
+            <option key={option.name} value={option.name}>
+              {option.name}
+            </option>
+          ))}
         </select>
 
         {targetLicensure === "LET" && (

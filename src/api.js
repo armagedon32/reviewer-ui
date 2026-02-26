@@ -424,3 +424,58 @@ export async function clearQuestionsApi() {
   return data;
 }
 
+export async function downloadBackupApi(kind) {
+  const user = getUser();
+  const res = await fetch(`${API_URL}/admin/backup/${kind}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${user?.token || ""}`,
+    },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to download backup");
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get("content-disposition") || "";
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  const filename = match?.[1] || `${kind}-backup.zip`;
+  return { blob, filename };
+}
+
+export async function restoreDatabaseApi(file) {
+  const user = getUser();
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/admin/restore/database`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${user?.token || ""}`,
+    },
+    body: formData,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to restore database");
+  }
+  return data;
+}
+
+export async function restoreSystemApi(file) {
+  const user = getUser();
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/admin/restore/system`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${user?.token || ""}`,
+    },
+    body: formData,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to restore system");
+  }
+  return data;
+}
+

@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { login, saveUser } from "../auth";
-import { getSystemLogo } from "../systemLogo";
+import { getSystemLogo, getSystemSchoolName } from "../systemLogo";
 
 export default function Login() {
   const logo = getSystemLogo();
+  const schoolName = getSystemSchoolName();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -47,7 +48,7 @@ export default function Login() {
         </h1>
 
         <p className="system-subtitle">
-          Kolehiyo ng Subic
+          {schoolName}
         </p>
 
         <form onSubmit={handleLogin}>

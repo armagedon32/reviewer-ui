@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
 import {
   getAccessStatusApi,
+  getAppSettingsApi,
   getExamHistoryApi,
   getExamStatsApi,
   getProfileApi,
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const [examHistory, setExamHistory] = useState([]);
   const [classStats, setClassStats] = useState(null);
   const [activeUserCounts, setActiveUserCounts] = useState(null);
+  const [appSettings, setAppSettings] = useState(null);
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -228,6 +230,12 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    getAppSettingsApi()
+      .then((data) => setAppSettings(data))
+      .catch(() => setAppSettings(null));
+  }, []);
+
+  useEffect(() => {
     if (user.role !== "instructor") return;
     const program = instructorProfile?.program || null;
     getExamStatsApi(program)
@@ -268,6 +276,26 @@ export default function Dashboard() {
   const totalAttempts = examHistory.length;
   const passCount = examHistory.filter((entry) => entry.result === "PASS").length;
   const passRate = totalAttempts ? Math.round((passCount / totalAttempts) * 100) : 0;
+  const requiredThreshold =
+    typeof profile?.required_passing_threshold === "number"
+      ? profile.required_passing_threshold
+      : typeof appSettings?.passing_threshold_default === "number"
+        ? appSettings.passing_threshold_default
+        : 75;
+  const masteryThreshold =
+    typeof appSettings?.mastery_threshold === "number" ? appSettings.mastery_threshold : 90;
+  const developingThreshold = Math.max(0, masteryThreshold - 15);
+  const guidedThreshold = Math.max(0, masteryThreshold - 30);
+  const exploratoryThreshold = Math.max(0, masteryThreshold - 45);
+  const passStreak = examHistory.length
+    ? examHistory.findIndex((entry) => entry.result !== "PASS")
+    : 0;
+  const passStreakCount = passStreak === -1 ? examHistory.length : passStreak;
+  const streakQualified = passStreakCount >= 5;
+  const latestQualified =
+    latestExam && typeof latestExam.percentage === "number"
+      ? latestExam.percentage >= masteryThreshold
+      : false;
   const bestSubject = subjectBreakdown.length
     ? subjectBreakdown.reduce(
         (best, item) => (item.value > best.value ? item : best),
@@ -339,7 +367,7 @@ export default function Dashboard() {
     }
   }
   const trendStyleFor = (percentage) => {
-    if (percentage >= 90) {
+    if (percentage >= masteryThreshold) {
       return {
         background: "linear-gradient(180deg, #16a34a, #4ade80)",
         boxShadow: "0 8px 18px rgba(22, 163, 74, 0.25)",
@@ -422,17 +450,17 @@ export default function Dashboard() {
   // AI interpretation: map latest exam percentage to a mastery band.
   const badge =
     latestExam && typeof latestExam.percentage === "number"
-      ? latestExam.percentage >= 90
+      ? latestExam.percentage >= masteryThreshold
         ? {
             color: "green",
             label: "Mastery",
             note: "Ready for certification / mock board pass",
           }
-        : latestExam.percentage >= 75
+        : latestExam.percentage >= developingThreshold
           ? { color: "yellow", label: "Developing", note: "Needs targeted review" }
-          : latestExam.percentage >= 60
+          : latestExam.percentage >= guidedThreshold
             ? { color: "orange", label: "Guided", note: "Requires structured intervention" }
-            : latestExam.percentage >= 40
+            : latestExam.percentage >= exploratoryThreshold
               ? { color: "blue", label: "Exploratory", note: "Early-stage learning" }
               : { color: "red", label: "Struggling", note: "Immediate remediation" }
       : null;
@@ -558,6 +586,23 @@ export default function Dashboard() {
                     <button style={{ marginTop: 12 }} onClick={() => setEditingProfile(true)}>
                       Complete Profile
                     </button>
+                  </div>
+                )}
+                {(streakQualified || latestQualified) && (
+                  <div className="dashboard-card">
+                    <div className="card-header">
+                      <h3>Performance Milestone</h3>
+                      <span className="status-pill pass">Ready</span>
+                    </div>
+                    <p className="status-note" style={{ marginTop: 8 }}>
+                      {streakQualified
+                        ? `Congratulations! You passed ${passStreakCount} consecutive ${profile?.target_licensure || "licensure"} mock exams with ≥${requiredThreshold}%.`
+                        : `Congratulations! You reached the target score of ${requiredThreshold}% in your latest mock exam.`}
+                    </p>
+                    <p className="status-note" style={{ marginTop: 6 }}>
+                      You are now marked as READY to take the{" "}
+                      {profile?.target_licensure || "licensure"} examination.
+                    </p>
                   </div>
                 )}
                 <div className="dashboard-grid">
@@ -765,7 +810,9 @@ export default function Dashboard() {
                         <span className="metric-value">
                           {profile?.required_passing_threshold
                             ? `${profile.required_passing_threshold}%`
-                            : "90%"}
+                            : typeof appSettings?.passing_threshold_default === "number"
+                              ? `${appSettings.passing_threshold_default}%`
+                              : "75%"}
                         </span>
                       </div>
                     </div>
@@ -788,7 +835,9 @@ export default function Dashboard() {
                       <button onClick={() => navigate("/analytics")}>
                         View Analytics
                       </button>
-                      <button>Certification Status</button>
+                      <button onClick={() => navigate("/certification-status")}>
+                        Certification Status
+                      </button>
                     </div>
                   </section>
 
@@ -814,7 +863,7 @@ export default function Dashboard() {
                           <p className="highlight-title">Focus Area</p>
                           <p className="highlight-text">
                             Because your {weakestSubject?.label} accuracy (
-                            {weakestSubject?.value ?? 0}%) is below the 90% mastery threshold,
+                            {weakestSubject?.value ?? 0}%) is below the {masteryThreshold}% mastery threshold,
                             the system recommends focused remediation in this area.
                           </p>
                         </div>

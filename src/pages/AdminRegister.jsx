@@ -4,10 +4,11 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { registerAdmin } from "../auth";
 import AlertModal from "../components/AlertModal";
-import { getSystemLogo } from "../systemLogo";
+import { getSystemLogo, getSystemSchoolName } from "../systemLogo";
 
 export default function AdminRegister() {
   const logo = getSystemLogo();
+  const schoolName = getSystemSchoolName();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [adminKey, setAdminKey] = useState("");
@@ -70,7 +71,7 @@ export default function AdminRegister() {
           Personalized Certification & Mock Board Reviewer
         </h1>
 
-        <p className="system-subtitle">Kolehiyo ng Subic</p>
+        <p className="system-subtitle">{schoolName}</p>
         <AlertModal
           isOpen={modal.open}
           title={modal.title}

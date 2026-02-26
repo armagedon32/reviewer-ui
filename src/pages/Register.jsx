@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { getSystemLogo } from "../systemLogo";
+import { getSystemLogo, getSystemSchoolName } from "../systemLogo";
 
 export default function Register() {
   const logo = getSystemLogo();
+  const schoolName = getSystemSchoolName();
   return (
     <div className="container">
       <div className="card">
@@ -16,7 +17,7 @@ export default function Register() {
         </h1>
 
         <p className="system-subtitle">
-          Kolehiyo ng Subic
+          {schoolName}
         </p>
 
         <p className="status-note">

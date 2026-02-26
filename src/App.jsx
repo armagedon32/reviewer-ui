@@ -19,6 +19,7 @@ import ChangePassword from "./pages/ChangePassword";
 import InstructorPerformance from "./pages/InstructorPerformance";
 import InstructorExamPreview from "./pages/InstructorExamPreview";
 import ApprovalPending from "./pages/ApprovalPending";
+import CertificationStatus from "./pages/CertificationStatus";
 
 
 export default function App() {
@@ -160,6 +161,15 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["student"]}>
               <Analytics />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/certification-status"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <CertificationStatus />
             </ProtectedRoute>
           }
         />
