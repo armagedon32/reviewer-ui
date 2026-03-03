@@ -11,6 +11,7 @@ import {
   resetSelectedStudentExamsApi,
   resetUserExamsApi,
   resetUserPasswordApi,
+  setProfileEditPermissionApi,
   setUserStatusApi,
 } from "../api";
 import { getSystemLogo } from "../systemLogo";
@@ -219,6 +220,27 @@ export default function AdminUserManagement() {
     }
   };
 
+  const handleProfileEditPermission = async (user) => {
+    try {
+      const nextValue = !user.profile_edit_allowed;
+      await setProfileEditPermissionApi(user.id, nextValue);
+      refreshUsers();
+      showNotice({
+        type: "success",
+        title: "Profile edit permission updated",
+        message: nextValue
+          ? `${user.email} can now edit their profile once.`
+          : `${user.email} profile editing permission removed.`,
+      });
+    } catch (err) {
+      showNotice({
+        type: "error",
+        title: "Update failed",
+        message: err?.message || "Unable to update profile edit permission.",
+      });
+    }
+  };
+
   const handleDeleteUser = async (user) => {
     try {
       await deleteUserApi(user.id);
@@ -414,6 +436,14 @@ export default function AdminUserManagement() {
                       >
                         Reset Exams
                       </button>
+                      {user.role === "student" && (
+                        <button
+                          className="admin-action-btn subtle"
+                          onClick={() => handleProfileEditPermission(user)}
+                        >
+                          {user.profile_edit_allowed ? "Revoke Profile Edit" : "Allow Profile Edit"}
+                        </button>
+                      )}
                       <button
                         className="admin-action-btn warning"
                         onClick={() => handleResetPassword(user)}

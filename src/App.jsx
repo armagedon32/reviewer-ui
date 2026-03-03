@@ -10,6 +10,7 @@ import ReviewMissed from "./pages/ReviewMissed";
 import ExamPreview from "./pages/ExamPreview";
 import AdminPanel from "./pages/AdminPanel";
 import AdminSystemSettings from "./pages/AdminSystemSettings";
+import AdminCertificationManagement from "./pages/AdminCertificationManagement";
 import AdminExamSettings from "./pages/AdminExamSettings";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import AdminAuditLogs from "./pages/AdminAuditLogs";
@@ -99,6 +100,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminExamSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/certification-management"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminCertificationManagement />
             </ProtectedRoute>
           }
         />

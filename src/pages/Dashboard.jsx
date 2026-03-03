@@ -6,6 +6,7 @@ import {
   getAppSettingsApi,
   getExamHistoryApi,
   getExamStatsApi,
+  getNextRecommendationApi,
   getProfileApi,
   listUsersApi,
   requestAccessApi,
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [classStats, setClassStats] = useState(null);
   const [activeUserCounts, setActiveUserCounts] = useState(null);
   const [appSettings, setAppSettings] = useState(null);
+  const [rlRecommendation, setRlRecommendation] = useState(null);
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -39,6 +41,7 @@ export default function Dashboard() {
     confirmText: "OK",
     onConfirm: null,
   });
+  const canEditStudentProfile = !profile || Boolean(profile?.can_edit_profile);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -142,7 +145,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!isForcedProfileSetup) return;
-    if (user.role === "student" && !loadingProfile) {
+    if (user.role === "student" && !loadingProfile && canEditStudentProfile) {
       setEditingProfile(true);
     }
     if (user.role === "instructor" && !loadingInstructorProfile) {
@@ -152,6 +155,7 @@ export default function Dashboard() {
     isForcedProfileSetup,
     user.role,
     loadingProfile,
+    canEditStudentProfile,
     loadingInstructorProfile,
   ]);
 
@@ -234,6 +238,17 @@ export default function Dashboard() {
       .then((data) => setAppSettings(data))
       .catch(() => setAppSettings(null));
   }, []);
+
+  useEffect(() => {
+    if (user.role !== "student") return;
+    getNextRecommendationApi()
+      .then((data) => {
+        setRlRecommendation(data);
+      })
+      .catch(() => {
+        setRlRecommendation(null);
+      });
+  }, [user.role, examHistory.length]);
 
   useEffect(() => {
     if (user.role !== "instructor") return;
@@ -321,6 +336,13 @@ export default function Dashboard() {
     position: "-",
     program: "-",
   };
+  const instructorProgram = (instructorProfileSafe.program || "").trim().toUpperCase();
+  const instructorRecentAttempts = (classStats?.recent_attempts || []).filter((attempt) => {
+    if (!instructorProgram || instructorProgram === "-") return true;
+    return String(attempt?.exam_type || "").trim().toUpperCase() === instructorProgram;
+  });
+  const instructorEnrollmentRows =
+    instructorProgram === "LET" ? classStats?.let_major_counts || [] : [];
   const studentProfileComplete =
     !!profile &&
     !!profile.student_id_number &&
@@ -411,10 +433,15 @@ export default function Dashboard() {
       : performanceTrendDirection === "down"
         ? "Declining"
         : "Steady";
-  const classTrend = (classStats?.recent_scores || []).map((score, index) => ({
-    date: new Date(Date.now() - (classStats.recent_scores.length - index - 1) * 86400000),
-    percentage: Math.round(score),
-  }));
+  const classTrend = [...instructorRecentAttempts]
+    .reverse()
+    .slice(-7)
+    .map((attempt, index, arr) => ({
+      date: attempt?.created_at
+        ? new Date(attempt.created_at)
+        : new Date(Date.now() - (arr.length - index - 1) * 86400000),
+      percentage: Math.round(Number(attempt?.percentage || 0)),
+    }));
   const classTrendDelta = classTrend.length
     ? classTrend[classTrend.length - 1].percentage - classTrend[0].percentage
     : 0;
@@ -426,6 +453,28 @@ export default function Dashboard() {
       : classTrendDirection === "down"
         ? "Declining"
         : "Steady";
+  const instructorTotalScore = instructorRecentAttempts.reduce(
+    (sum, attempt) => sum + Number(attempt?.score || 0),
+    0
+  );
+  const instructorTotalItems = instructorRecentAttempts.reduce(
+    (sum, attempt) => sum + Number(attempt?.total || 0),
+    0
+  );
+  const instructorAvgScore = instructorRecentAttempts.length
+    ? Math.round(
+        instructorRecentAttempts.reduce(
+          (sum, attempt) => sum + Number(attempt?.percentage || 0),
+          0
+        ) / instructorRecentAttempts.length
+      )
+    : null;
+  const instructorCompletion = instructorTotalItems
+    ? Math.round((instructorTotalScore / instructorTotalItems) * 100)
+    : null;
+  const instructorActiveExaminees = new Set(
+    instructorRecentAttempts.map((attempt) => String(attempt?.email || "").trim()).filter(Boolean)
+  ).size;
 
   const averageScore = examHistory.length
     ? Math.round(
@@ -468,11 +517,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (user.role !== "student" || !profile || editingProfile) return;
     const params = new URLSearchParams(location.search);
-    if (params.get("edit") === "1") {
+    if (params.get("edit") === "1" && canEditStudentProfile) {
       setEditingProfile(true);
       navigate("/dashboard", { replace: true });
     }
-  }, [user.role, profile, editingProfile, location.search, navigate]);
+  }, [user.role, profile, editingProfile, canEditStudentProfile, location.search, navigate]);
 
 
   const requestAccess = () => {
@@ -583,9 +632,18 @@ export default function Dashboard() {
                       Your account is approved. You can continue using the dashboard,
                       but completing your profile improves exam setup and tracking.
                     </p>
-                    <button style={{ marginTop: 12 }} onClick={() => setEditingProfile(true)}>
+                    <button
+                      style={{ marginTop: 12 }}
+                      onClick={() => setEditingProfile(true)}
+                      disabled={!canEditStudentProfile}
+                    >
                       Complete Profile
                     </button>
+                    {!canEditStudentProfile && (
+                      <p className="status-note" style={{ marginTop: 8 }}>
+                        Profile editing is locked. Ask admin to allow profile editing.
+                      </p>
+                    )}
                   </div>
                 )}
                 {(streakQualified || latestQualified) && (
@@ -699,9 +757,17 @@ export default function Dashboard() {
                         </p>
                       </div>
                     </div>
-                    <button onClick={() => setEditingProfile(true)}>
+                    <button
+                      onClick={() => setEditingProfile(true)}
+                      disabled={!canEditStudentProfile}
+                    >
                       Edit Profile
                     </button>
+                    {!canEditStudentProfile && (
+                      <p className="status-note" style={{ marginTop: 8 }}>
+                        Profile editing is locked. Ask admin to allow profile editing.
+                      </p>
+                    )}
                   </section>
 
                   <section className="dashboard-card progress-card">
@@ -967,6 +1033,14 @@ export default function Dashboard() {
                       <span className="status-note">Next best actions</span>
                     </div>
                     <ul className="recommendation-list">
+                      {rlRecommendation && (
+                        <li>
+                          <strong>{rlRecommendation.action_label}:</strong> {rlRecommendation.reason}
+                          {!!rlRecommendation.focus_subjects?.length && (
+                            <> Focus: {rlRecommendation.focus_subjects.join(", ")}.</>
+                          )}
+                        </li>
+                      )}
                       {!latestExam && (
                         <li>Take your first mock exam to unlock analytics.</li>
                       )}
@@ -1153,19 +1227,19 @@ export default function Dashboard() {
                     <div className="metric">
                       <span className="metric-label">Avg Score</span>
                       <span className="metric-value">
-                        {classStats ? `${classStats.avg_score}%` : "-"}
+                        {instructorAvgScore != null ? `${instructorAvgScore}%` : "-"}
                       </span>
                     </div>
                     <div className="metric">
                       <span className="metric-label">Completion</span>
                       <span className="metric-value">
-                        {classStats ? `${classStats.completion_rate}%` : "-"}
+                        {instructorCompletion != null ? `${instructorCompletion}%` : "-"}
                       </span>
                     </div>
                     <div className="metric">
-                      <span className="metric-label">Active Students</span>
+                      <span className="metric-label">Active Examinees</span>
                       <span className="metric-value">
-                        {classStats ? classStats.active_students : "-"}
+                        {instructorActiveExaminees}
                       </span>
                     </div>
                   </div>
@@ -1174,12 +1248,16 @@ export default function Dashboard() {
               <div className="dashboard-grid">
                 <section className="dashboard-card results-card">
                   <div className="card-header">
-                    <h3>LET Enrollment by Major</h3>
+                    <h3>
+                      {instructorProgram === "LET"
+                        ? "LET Enrollment by Major"
+                        : `${instructorProgram || "Program"} Enrollment`}
+                    </h3>
                     <span className="status-note">Registered students</span>
                   </div>
-                  {classStats?.let_major_counts?.length ? (
+                  {instructorEnrollmentRows.length ? (
                     <div className="results-list">
-                      {classStats.let_major_counts.map((entry) => (
+                      {instructorEnrollmentRows.map((entry) => (
                         <div key={entry.major} className="result-row">
                           <span className="result-label">{entry.major}</span>
                           <div className="result-bar">
@@ -1194,7 +1272,11 @@ export default function Dashboard() {
                       ))}
                     </div>
                   ) : (
-                    <p className="history-empty">No LET student data yet.</p>
+                    <p className="history-empty">
+                      {instructorProgram === "LET"
+                        ? "No LET student data yet."
+                        : `No ${instructorProgram || "program"} enrollment breakdown available.`}
+                    </p>
                   )}
                 </section>
                 <section className="dashboard-card history-card">
@@ -1202,9 +1284,9 @@ export default function Dashboard() {
                     <h3>Recent Exam Attempts</h3>
                     <span className="status-note">Date & time</span>
                   </div>
-                  {classStats?.recent_attempts?.length ? (
+                  {instructorRecentAttempts.length ? (
                     <div className="history-list">
-                      {classStats.recent_attempts.map((attempt, index) => (
+                      {instructorRecentAttempts.map((attempt, index) => (
                         <div
                           key={`${attempt.email}-${attempt.created_at}-${index}`}
                           className="history-row"
@@ -1247,7 +1329,9 @@ export default function Dashboard() {
               </div>
               <div className="action-grid">
                 <button onClick={() => navigate("/admin")}>Admin Settings</button>
-                <button>Certification Management</button>
+                <button onClick={() => navigate("/admin/certification-management")}>
+                  Certification Management
+                </button>
                 <button>System Reports</button>
               </div>
             </section>

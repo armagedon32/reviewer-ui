@@ -14,6 +14,7 @@ export default function AdminExamSettings() {
     exam_major_question_count: 50,
     passing_threshold_default: 75,
     mastery_threshold: 90,
+    rl_enabled: false,
     target_licensure_options: DEFAULT_TARGET_LICENSURE_OPTIONS,
   });
   const [saving, setSaving] = useState(false);
@@ -29,6 +30,7 @@ export default function AdminExamSettings() {
             exam_major_question_count: data.exam_major_question_count ?? 50,
             passing_threshold_default: data.passing_threshold_default ?? 75,
             mastery_threshold: data.mastery_threshold ?? 90,
+            rl_enabled: !!data.rl_enabled,
             target_licensure_options:
               Array.isArray(data.target_licensure_options) && data.target_licensure_options.length
                 ? data.target_licensure_options
@@ -221,23 +223,6 @@ export default function AdminExamSettings() {
                     setSettings((prev) => ({
                       ...prev,
                       passing_threshold_default: Number(event.target.value),
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="admin-form-field">
-                <label htmlFor="masteryThreshold">Mastery target (%)</label>
-                <input
-                  id="masteryThreshold"
-                  type="number"
-                  min="50"
-                  max="100"
-                  value={settings.mastery_threshold}
-                  onChange={(event) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      mastery_threshold: Number(event.target.value),
                     }))
                   }
                   required

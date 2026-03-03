@@ -133,8 +133,12 @@ export default function ProfileSetup({ onSaved, onCancel }) {
         section_class: sectionClass || null,
         status,
         target_licensure: targetLicensure,
-        let_track: targetLicensure === "LET" ? letTrack : null,
-        major_specialization: majorSpecialization,
+        let_track: isLET ? letTrack : null,
+        major_specialization: isLETSecondary
+          ? majorSpecialization
+          : isLET
+            ? "Elementary"
+            : targetLicensure,
         assigned_review_subjects: availableSubjects,
         required_passing_threshold: requiredPassingThreshold,
       };
@@ -173,7 +177,10 @@ export default function ProfileSetup({ onSaved, onCancel }) {
               `Licensure: ${previous.target_licensure || "-"} -> ${targetLicensure}`
             );
           }
-          if ((previous.major_specialization || "") !== majorSpecialization) {
+          if (
+            isLETSecondary &&
+            (previous.major_specialization || "") !== majorSpecialization
+          ) {
             changes.push(
               `Specialization: ${previous.major_specialization || "-"} -> ${majorSpecialization}`
             );
@@ -193,8 +200,10 @@ export default function ProfileSetup({ onSaved, onCancel }) {
   }
 
   const rule = activeRule;
+  const isLET = targetLicensure === "LET";
+  const isLETSecondary = isLET && letTrack === "Secondary";
   const availableSubjects =
-    targetLicensure === "LET" && letTrack === "Elementary"
+    isLET && letTrack === "Elementary"
       ? rule.subjects.filter((subject) => subject !== "Specialization")
       : rule.subjects;
 
@@ -273,28 +282,20 @@ export default function ProfileSetup({ onSaved, onCancel }) {
           </>
         )}
 
-        {(targetLicensure !== "LET" || letTrack === "Secondary") && (
+        {isLETSecondary && (
           <>
             <label>Major / Specialization</label>
-            {targetLicensure === "LET" ? (
-              <select
-                value={majorSpecialization}
-                onChange={(e) => setMajorSpecialization(e.target.value)}
-                required
-              >
-                <option value="">Select major...</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Filipino">Filipino</option>
-                <option value="Social Studies">Social Studies</option>
-                <option value="English">English</option>
-              </select>
-            ) : (
-              <input
-                value={majorSpecialization}
-                onChange={(e) => setMajorSpecialization(e.target.value)}
-                required
-              />
-            )}
+            <select
+              value={majorSpecialization}
+              onChange={(e) => setMajorSpecialization(e.target.value)}
+              required
+            >
+              <option value="">Select major...</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Filipino">Filipino</option>
+              <option value="Social Studies">Social Studies</option>
+              <option value="English">English</option>
+            </select>
           </>
         )}
 

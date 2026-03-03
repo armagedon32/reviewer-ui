@@ -7,6 +7,7 @@ import {
   clearQuestionsApi,
   cleanupQuestionsApi,
 } from "../api";
+import { getUser } from "../auth";
 import Button from "../components/Button";
 import InlineNotice from "../components/InlineNotice";
 
@@ -24,6 +25,21 @@ const defaultForm = {
 };
 
 export default function QuestionBank() {
+  const user = getUser();
+  const isInstructor = user?.role === "instructor";
+  const instructorStorageKey = user?.email
+    ? `instructor_profile_${user.email}`
+    : "instructor_profile";
+  const instructorProfile = (() => {
+    try {
+      const raw = localStorage.getItem(instructorStorageKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const instructorProgram = (instructorProfile?.program || "LET").toUpperCase();
+
   const [form, setForm] = useState(defaultForm);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,6 +54,12 @@ export default function QuestionBank() {
 
   const showNotice = (next) => setNotice(next);
   const clearNotice = () => setNotice(null);
+
+  useEffect(() => {
+    if (isInstructor) {
+      setForm((prev) => ({ ...prev, exam_type: instructorProgram }));
+    }
+  }, [isInstructor, instructorProgram]);
 
   const loadQuestions = async () => {
     setFetching(true);
@@ -216,6 +238,24 @@ export default function QuestionBank() {
     });
   };
 
+  const visibleQuestions = questions
+    .filter((q) => {
+      if (isInstructor) {
+        return (q.exam_type || "").toUpperCase() === instructorProgram;
+      }
+      return true;
+    })
+    .filter((q) => {
+      const term = filter.trim().toLowerCase();
+      if (!term) return true;
+      return (
+        q.subject?.toLowerCase().includes(term) ||
+        q.topic?.toLowerCase().includes(term) ||
+        q.question?.toLowerCase().includes(term) ||
+        q.exam_type?.toLowerCase().includes(term)
+      );
+    });
+
   return (
     <div className="container">
       <div className="card question-card">
@@ -251,7 +291,7 @@ export default function QuestionBank() {
             >
               Back to Dashboard
             </button>
-            <div className="count-pill">Total: {questions.length}</div>
+            <div className="count-pill">Total: {visibleQuestions.length}</div>
           </div>
         </div>
 
@@ -281,7 +321,7 @@ export default function QuestionBank() {
 
             <div className="panel-box" style={{ marginTop: "14px" }}>
               <div className="panel-title">
-                Existing Questions ({questions.length})
+                Existing Questions ({visibleQuestions.length})
               </div>
               <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
                 <input
@@ -322,29 +362,18 @@ export default function QuestionBank() {
               </div>
               {fetching ? (
                 <p>Loading questions...</p>
-              ) : questions.length === 0 ? (
+              ) : visibleQuestions.length === 0 ? (
                 <p>No questions yet.</p>
               ) : (
                 <div className="question-list">
-                  {questions
-                    .filter((q) => {
-                      const term = filter.trim().toLowerCase();
-                      if (!term) return true;
-                      return (
-                        q.subject?.toLowerCase().includes(term) ||
-                        q.topic?.toLowerCase().includes(term) ||
-                        q.question?.toLowerCase().includes(term) ||
-                        q.exam_type?.toLowerCase().includes(term)
-                      );
-                    })
-                    .map((q) => (
-                      <div key={q.id} className="question-row">
-                        <strong>
-                          [{q.exam_type}] {q.subject} ({q.difficulty})
-                        </strong>
-                        <p style={{ margin: "4px 0" }}>{q.question}</p>
-                      </div>
-                    ))}
+                  {visibleQuestions.map((q) => (
+                    <div key={q.id} className="question-row">
+                      <strong>
+                        [{q.exam_type}] {q.subject} ({q.difficulty})
+                      </strong>
+                      <p style={{ margin: "4px 0" }}>{q.question}</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -365,10 +394,17 @@ export default function QuestionBank() {
                 <select
                   value={form.exam_type}
                   onChange={(e) => handleChange("exam_type", e.target.value)}
+                  disabled={isInstructor}
                   required
                 >
-                  <option value="LET">LET</option>
-                  <option value="CPA">CPA</option>
+                  {isInstructor ? (
+                    <option value={instructorProgram}>{instructorProgram}</option>
+                  ) : (
+                    <>
+                      <option value="LET">LET</option>
+                      <option value="CPA">CPA</option>
+                    </>
+                  )}
                 </select>
 
                 <label>Subject</label>

@@ -424,6 +424,104 @@ export async function clearQuestionsApi() {
   return data;
 }
 
+export async function setProfileEditPermissionApi(userId, allowed) {
+  const res = await fetch(`${API_URL}/admin/users/${userId}/profile-edit-permission`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ allowed }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to update profile edit permission");
+  }
+  return data;
+}
+
+export async function getNextRecommendationApi() {
+  const res = await fetch(`${API_URL}/recommend/next-action`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load recommendation");
+  }
+  return data;
+}
+
+export async function submitRecommendationFeedbackApi(payload) {
+  const res = await fetch(`${API_URL}/recommend/feedback`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to submit recommendation feedback");
+  }
+  return data;
+}
+
+export async function getRlMetricsApi() {
+  const res = await fetch(`${API_URL}/recommend/admin/metrics`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load RL metrics");
+  }
+  return data;
+}
+
+export async function listCertificationManagementApi() {
+  const res = await fetch(`${API_URL}/admin/certifications`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load certification management data");
+  }
+  return data;
+}
+
+export async function approveCertificationEligibilityApi(userId, override = false) {
+  const res = await fetch(`${API_URL}/admin/certifications/${userId}/approve`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ override }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to approve eligibility");
+  }
+  return data;
+}
+
+export async function revokeCertificateApi(certificateId) {
+  const res = await fetch(`${API_URL}/admin/certifications/${certificateId}/revoke`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to revoke certificate");
+  }
+  return data;
+}
+
+export async function verifyCertificateCodeApi(verificationCode) {
+  const res = await fetch(
+    `${API_URL}/admin/certifications/verify/${encodeURIComponent(verificationCode)}`,
+    {
+      headers: authHeaders(),
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Verification code not found");
+  }
+  return data;
+}
+
 export async function downloadBackupApi(kind) {
   const user = getUser();
   const res = await fetch(`${API_URL}/admin/backup/${kind}`, {

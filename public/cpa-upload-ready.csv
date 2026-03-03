@@ -1,0 +1,61 @@
+exam_type,subject,topic,difficulty,question,a,b,c,d,answer
+CPA,FAR,Cash and Cash Equivalents,Hard,A petty cash fund is set at PHP 25000. Cash on hand is PHP 4200 and receipts total PHP 19850. How much is the replenishment?,950,900,1050,850,A
+CPA,FAR,Accounts Receivable,Hard,Beginning allowance is PHP 120000 credit. Write offs are PHP 30000. Required ending allowance is PHP 150000 credit. Bad debt expense is?,60000,30000,45000,15000,A
+CPA,FAR,Inventory,Hard,Goods available for sale is PHP 980000. Ending inventory is PHP 275000. Cost of goods sold is?,705000,715000,695000,725000,A
+CPA,FAR,Depreciation,Hard,Equipment cost is PHP 1200000 salvage value PHP 120000 life 9 years straight line annual depreciation is?,120000,108000,100000,98000,A
+CPA,FAR,Revenue Recognition,Hard,Contract price is PHP 2400000. Percentage of completion this year is 35 percent. Revenue to recognize is?,840000,780000,900000,720000,A
+CPA,FAR,Liabilities,Hard,Notes payable of PHP 500000 has annual interest 12 percent for 8 months. Accrued interest is?,40000,48000,50000,36000,A
+CPA,FAR,Equity,Hard,Retained earnings beginning 900000 net income 260000 dividends 110000 ending retained earnings is?,1050000,1150000,950000,990000,A
+CPA,FAR,Statement of Cash Flows,Hard,Net income is 500000 depreciation 90000 gain on sale of equipment 30000 increase in receivables 40000. Cash from operating activities indirect method is?,520000,560000,480000,500000,A
+CPA,FAR,Financial Assets,Medium,A bond investment held to collect contractual cash flows is measured at?,Amortized cost,Fair value through profit or loss,Fair value through OCI,Historical cost,A
+CPA,FAR,Conceptual Framework,Easy,Which qualitative characteristic means information can influence decisions?,Relevance,Timeliness,Neutrality,Comparability,A
+CPA,AFAR,Foreign Currency Transactions,Hard,USD payable 150000 recognized at PHP 55.20 settled at PHP 56.10. Foreign exchange loss is?,135000,120000,150000,90000,A
+CPA,AFAR,Foreign Currency Transactions,Hard,USD receivable 90000 recognized at PHP 54.80 year end rate PHP 55.30. Unrealized gain is?,45000,40000,50000,55000,A
+CPA,AFAR,Consolidation,Hard,Parent owns 80 percent of subsidiary. Subsidiary net income is 600000. Non controlling interest share in income is?,120000,100000,90000,140000,A
+CPA,AFAR,Consolidation,Hard,Unrealized profit in ending inventory from upstream sale is 250000. Parent ownership is 70 percent. NCI share in adjustment is?,75000,70000,50000,100000,A
+CPA,AFAR,Business Combination,Hard,Fair value of consideration transferred is 8000000 and fair value of net identifiable assets is 7300000. Goodwill is?,700000,600000,900000,500000,A
+CPA,AFAR,Partnership,Hard,Partner A capital 500000 partner B capital 300000. Net income 240000 shared 3 to 1. Share of A is?,180000,160000,120000,200000,A
+CPA,AFAR,Home Office and Branch,Hard,Home office shipped merchandise billed at 600000 with 20 percent markup on cost. Realized gross profit on this transfer is?,100000,120000,90000,80000,A
+CPA,AFAR,Intercompany Transactions,Hard,Intercompany sale 400000 cost 320000. Forty percent remains unsold at year end. Unrealized profit is?,32000,28000,36000,40000,A
+CPA,AFAR,Foreign Operations,Medium,Which rate is used to translate assets and liabilities under current rate method?,Closing rate,Historical rate,Average rate,Spot rate at transaction date,A
+CPA,AFAR,Segment Reporting,Easy,IFRS 8 requires disclosure of segment information based on?,Management approach,Legal entity approach,Tax authority approach,Only geographical approach,A
+CPA,Auditing,Audit Planning,Hard,Overall materiality is set at PHP 1200000 and performance materiality at 75 percent. Performance materiality is?,900000,800000,750000,1000000,A
+CPA,Auditing,Sampling,Hard,Population 50000 items tolerable misstatement 250000 expected misstatement 50000. If sample result exceeds tolerable misstatement the auditor should?,Expand testing or require adjustment,Automatically issue adverse opinion,Ignore if management disagrees,Reduce sample size,A
+CPA,Auditing,Risk Assessment,Hard,Detection risk is inversely related to?,Substantive testing extent,Audit evidence reliability,Control risk documentation,Management representation letter date,A
+CPA,Auditing,Internal Control,Hard,If control risk is assessed high the auditor generally?,Increases substantive procedures,Eliminates substantive procedures,Relies only on inquiry,Issues disclaimer automatically,A
+CPA,Auditing,Audit Evidence,Hard,Most reliable audit evidence is usually obtained from?,Independent external sources,Client oral explanations,Internal memos unsigned,Analytical procedures only,A
+CPA,Auditing,Audit Opinion,Hard,A qualified opinion is appropriate when?,Misstatement is material but not pervasive,Misstatement is pervasive,No audit evidence and pervasive,No misstatement found,A
+CPA,Auditing,Subsequent Events,Hard,Events providing evidence of conditions existing at balance sheet date require?,Adjustment,Disclosure only,No action,Automatic restatement of prior years,A
+CPA,Auditing,Going Concern,Hard,If substantial doubt exists and disclosures are adequate the auditor typically issues?,Unmodified opinion with emphasis of matter,Adverse opinion,Disclaimer only,Qualified opinion always,A
+CPA,Auditing,Engagement Risk,Medium,Engagement letter primarily documents?,Terms and scope of audit,Client tax position only,Trial balance totals,Management bonus plans,A
+CPA,Auditing,Ethics,Easy,Fundamental ethical principle requiring freedom from bias is?,Objectivity,Confidentiality,Professional behavior,Competence,A
+CPA,MAS,Cost Volume Profit,Hard,Selling price 450 variable cost 270 fixed cost 540000 target profit 180000 required units are?,6000,5000,7000,8000,A
+CPA,MAS,Cost Volume Profit,Hard,Contribution margin ratio is 35 percent and fixed cost 420000. Break even sales is?,1200000,1400000,1000000,1600000,A
+CPA,MAS,Budgeting,Hard,Budgeted production equals?,Sales plus ending FG minus beginning FG,Sales minus ending FG plus beginning FG,Sales plus beginning FG minus ending FG,Sales plus ending RM minus beginning RM,A
+CPA,MAS,Standard Costing,Hard,Standard quantity 4 kg at 120 per kg. Actual quantity 4.5 kg for one unit. Quantity variance is?,600 unfavorable,540 unfavorable,500 unfavorable,480 unfavorable,A
+CPA,MAS,Variance Analysis,Hard,Standard labor 3 hours at 200 per hour. Actual labor 2.7 hours at 230 per hour. Labor rate variance is?,81 unfavorable,90 unfavorable,70 unfavorable,60 unfavorable,A
+CPA,MAS,Relevant Costing,Hard,In a special order decision which cost is usually relevant?,Incremental variable and avoidable fixed costs,Sunk costs,Allocated common fixed costs,Historical book values only,A
+CPA,MAS,Transfer Pricing,Hard,Goal congruent transfer price range is between?,Seller variable cost and external market price,Zero and full cost only,Historical cost and replacement cost,Tax rate and inflation rate,A
+CPA,MAS,Capital Budgeting,Hard,Project costs 1000000 and yields annual net cash inflow 280000 for 5 years no salvage. Approximate payback is?,3.57 years,4.20 years,2.80 years,5.00 years,A
+CPA,MAS,Performance Measurement,Medium,Residual income equals?,Operating income minus required return on investment,Operating income divided by investment,Sales minus variable cost,Net income plus depreciation,A
+CPA,MAS,Responsibility Accounting,Easy,A cost center manager is primarily responsible for?,Controlling costs,Generating revenue only,Approving dividends,Setting corporate tax policy,A
+CPA,RFBT,Obligations and Contracts,Hard,Essential requisites of a valid contract include consent object and?,Cause,Title,Form only,Witnesses,A
+CPA,RFBT,Sales and Agency,Hard,In agency the agent binds the principal when acting?,Within authority,Without authority always,Only with written notarization,Only in emergencies,A
+CPA,RFBT,Negotiable Instruments,Hard,To be negotiable an instrument must contain?,Unconditional promise or order to pay,Statement of purpose,Collateral description only,Management certification,A
+CPA,RFBT,Negotiable Instruments,Hard,A holder in due course takes the instrument?,For value in good faith without notice of defect,Only after maturity,Without endorsement,Only from maker,A
+CPA,RFBT,Corporation Law,Hard,Board action generally requires?,Majority of quorum at meeting duly called,Unanimous stockholder vote,Approval of corporate secretary only,Majority of all outstanding shares always,A
+CPA,RFBT,Partnership Law,Hard,In a general partnership partners are generally?,Unlimitedly liable jointly and subsidiarily,Liable only up to contribution,Never liable for torts,Liable only after dissolution,A
+CPA,RFBT,Secured Transactions,Hard,A pledge requires delivery of?,Movable property to creditor or third person,Land title to assessor only,Corporate books to SEC,Tax declaration to BIR,A
+CPA,RFBT,Insurance Law,Hard,Insurable interest in life insurance generally must exist?,At inception of policy,At time of loss only,At claim filing only,At policy maturity only,A
+CPA,RFBT,Commercial Law,Medium,A warehouse receipt is primarily a document of?,Title to goods,Partnership authority,Corporate franchise,Tax exemption,A
+CPA,RFBT,Legal Ethics,Easy,A CPA acting as legal consultant should primarily uphold?,Law and ethical standards,Client interest regardless of law,Only firm profitability,Only verbal agreements,A
+CPA,Taxation,Income Taxation,Hard,Taxable income is PHP 1800000 and tax rate for this item is 30 percent. Tax due is?,540000,500000,560000,520000,A
+CPA,Taxation,Income Taxation,Hard,If tax payable before credits is 260000 and creditable withholding tax is 90000 net tax payable is?,170000,150000,180000,190000,A
+CPA,Taxation,VAT,Hard,VAT exclusive sales are PHP 1250000 and output VAT rate is 12 percent. Output VAT is?,150000,120000,135000,160000,A
+CPA,Taxation,VAT,Hard,Output VAT is 240000 and input VAT is 165000. VAT payable is?,75000,85000,65000,90000,A
+CPA,Taxation,Percentage Tax,Hard,Gross quarterly sales are PHP 840000 under a 3 percent percentage tax regime. Tax due is?,25200,24000,26000,21000,A
+CPA,Taxation,Withholding Tax,Hard,Compensation withholding for period is 98000 while remittance made is 75000. Balance payable is?,23000,20000,25000,18000,A
+CPA,Taxation,Documentary Stamp Tax,Hard,Loan agreement subject to DST of PHP 1.50 per PHP 200 on PHP 4000000. DST due is?,30000,28000,32000,25000,A
+CPA,Taxation,Donor Tax,Hard,Net gift is PHP 600000 and donor tax rate applied for this item is 6 percent. Donor tax is?,36000,30000,42000,40000,A
+CPA,Taxation,Tax Administration,Medium,A compromise settlement in tax administration generally requires?,Approval under legal grounds and authority,Only taxpayer request,Only accountant certification,Automatic approval after 30 days,A
+CPA,Taxation,Basic Concepts,Easy,The Philippine tax system is mainly based on which legislative authority?,Power of taxation of the state,Only local ordinances,Private contracts,Accounting standards board,A
