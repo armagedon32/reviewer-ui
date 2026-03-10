@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
 import { getAppSettingsApi, getExamHistoryApi, getProfileApi } from "../api";
+import { DEFAULT_TARGET_LICENSURE_OPTIONS } from "../licensureDefaults";
 
 const FALLBACK_CONFIG = {
   primaryFocus: "General Education",
@@ -20,6 +21,11 @@ export default function ExamPreview() {
   const user = getUser();
   const [examHistory, setExamHistory] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [licensureOptions, setLicensureOptions] = useState(
+    DEFAULT_TARGET_LICENSURE_OPTIONS
+  );
+  const [timeLimit, setTimeLimit] = useState(FALLBACK_CONFIG.timeLimit);
+  const [questionCount, setQuestionCount] = useState(FALLBACK_CONFIG.questions);
 
   useEffect(() => {
     const historyKey = user?.email ? `exam_history_${user.email}` : "exam_history";
@@ -46,6 +52,22 @@ export default function ExamPreview() {
     getProfileApi()
       .then((data) => setProfile(data))
       .catch(() => setProfile(null));
+  }, []);
+
+  useEffect(() => {
+    getAppSettingsApi()
+      .then((data) => {
+        if (Array.isArray(data?.target_licensure_options) && data.target_licensure_options.length) {
+          setLicensureOptions(data.target_licensure_options);
+        }
+        if (data?.exam_time_limit_minutes) {
+          setTimeLimit(data.exam_time_limit_minutes);
+        }
+        if (data?.exam_question_count) {
+          setQuestionCount(data.exam_question_count);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const config = useMemo(() => {
@@ -85,10 +107,10 @@ export default function ExamPreview() {
     }
   }, [examHistory]);
 
-  const [timeLimit, setTimeLimit] = useState(FALLBACK_CONFIG.timeLimit);
-  const [questionCount, setQuestionCount] = useState(FALLBACK_CONFIG.questions);
+  const targetLicensure = profile?.target_licensure || "LET";
+  const isLET = targetLicensure === "LET";
   const specialization =
-    profile?.target_licensure === "LET" &&
+    isLET &&
     profile?.let_track === "Secondary" &&
     profile?.major_specialization
       ? profile.major_specialization
@@ -100,18 +122,25 @@ export default function ExamPreview() {
   const coreShare = specialization ? 100 - specializationShare : 100;
   const coreItems = specialization ? questionCount - specializationItems : questionCount;
 
-  useEffect(() => {
-    getAppSettingsApi()
-      .then((data) => {
-        if (data?.exam_time_limit_minutes) {
-          setTimeLimit(data.exam_time_limit_minutes);
-        }
-        if (data?.exam_question_count) {
-          setQuestionCount(data.exam_question_count);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const targetOption =
+    licensureOptions.find((option) => option.name === targetLicensure) ||
+    DEFAULT_TARGET_LICENSURE_OPTIONS.find((option) => option.name === targetLicensure) ||
+    DEFAULT_TARGET_LICENSURE_OPTIONS[0];
+  const licensureSubjects = Array.isArray(targetOption?.subjects)
+    ? targetOption.subjects
+    : [];
+  const perSubjectItems = licensureSubjects.length
+    ? Math.floor(questionCount / licensureSubjects.length)
+    : 0;
+  const remainderItems = licensureSubjects.length
+    ? questionCount % licensureSubjects.length
+    : 0;
+  const subjectCoverage = licensureSubjects
+    .map((subject, index) => {
+      const count = perSubjectItems + (index < remainderItems ? 1 : 0);
+      return `${subject} (${count} items)`;
+    })
+    .join(", ");
 
   return (
     <div className="exam-page exam-preview-page">
@@ -119,7 +148,7 @@ export default function ExamPreview() {
         <header className="exam-preview-header">
           <div>
             <p className="exam-kicker">Adaptive Exam Preview</p>
-            <h2 className="exam-title">Pre-Exam Confirmation</h2>
+            <h2 className="exam-title">{targetLicensure} Pre-Exam Confirmation</h2>
           </div>
           <button className="exam-preview-back" onClick={() => navigate("/dashboard")}>
             Back to Dashboard
@@ -127,8 +156,18 @@ export default function ExamPreview() {
         </header>
 
         <section className="exam-card exam-preview-card">
-          <h3 className="exam-preview-title">Next Mock Board Configuration</h3>
+          <h3 className="exam-preview-title">
+            {targetLicensure} Mock Board Configuration
+          </h3>
           <ul className="exam-preview-list">
+            <li>
+              <strong>Licensure Track:</strong> {targetLicensure}
+            </li>
+            {!isLET && licensureSubjects.length > 0 && (
+              <li>
+                <strong>Subject Coverage:</strong> {subjectCoverage}
+              </li>
+            )}
             <li>
               <strong>Primary Focus:</strong> {config.primaryFocus} ({config.primaryShare}%)
             </li>
@@ -139,17 +178,21 @@ export default function ExamPreview() {
               <>
                 <li>
                   <strong>Specialization Focus:</strong> {specialization} (
-                  {specializationShare}% • {specializationItems} items)
+                  {specializationShare}% / {specializationItems} items)
                 </li>
                 <li>
-                  <strong>Core Coverage:</strong> GenEd + ProfEd ({coreShare}% •{" "}
-                  {coreItems} items)
+                  <strong>Core Coverage:</strong> GenEd + ProfEd ({coreShare}% / {coreItems} items)
                 </li>
               </>
             )}
+            {!isLET && (
+              <li>
+                <strong>Coverage Mode:</strong> Balanced board distribution with adaptive
+                reinforcement on weaker CPA subjects
+              </li>
+            )}
             <li>
-              <strong>Difficulty Progression:</strong> {config.difficultyFrom} →{" "}
-              {config.difficultyTo}
+              <strong>Difficulty Progression:</strong> {config.difficultyFrom} to {config.difficultyTo}
             </li>
             <li>
               <strong>Exam Strategy:</strong> {config.strategy}
@@ -160,6 +203,12 @@ export default function ExamPreview() {
             <li>
               <strong>Number of Questions:</strong> {questionCount} items
             </li>
+            {!isLET && (
+              <li>
+                <strong>CPA Reminder:</strong> Expect computational and concept-based items
+                from accounting, auditing, taxation, business law, and related subjects.
+              </li>
+            )}
           </ul>
 
           <div className="exam-preview-actions">
