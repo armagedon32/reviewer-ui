@@ -16,6 +16,28 @@ const FALLBACK_CONFIG = {
   questions: 50,
 };
 
+function buildFallbackConfig(targetLicensure, subjects) {
+  if (targetLicensure === "CPA") {
+    return {
+      primaryFocus: subjects[0] || "FAR",
+      primaryShare: 35,
+      secondaryFocus: subjects[1] || "AFAR",
+      secondaryShare: 25,
+      difficultyFrom: "Easy",
+      difficultyTo: "Medium",
+      strategy: "Balanced CPA Coverage",
+      timeLimit: 90,
+      questions: 50,
+    };
+  }
+
+  return {
+    ...FALLBACK_CONFIG,
+    primaryFocus: subjects[0] || FALLBACK_CONFIG.primaryFocus,
+    secondaryFocus: subjects[1] || subjects[0] || FALLBACK_CONFIG.secondaryFocus,
+  };
+}
+
 export default function ExamPreview() {
   const navigate = useNavigate();
   const user = getUser();
@@ -70,43 +92,6 @@ export default function ExamPreview() {
       .catch(() => {});
   }, []);
 
-  const config = useMemo(() => {
-    if (!examHistory.length) return FALLBACK_CONFIG;
-    try {
-      const latest = examHistory?.[0];
-      if (!latest || !latest.subject_performance) return FALLBACK_CONFIG;
-
-      const subjects = Object.entries(latest.subject_performance).map(
-        ([label, stat]) => ({
-          label,
-          value: Math.round((stat.correct / stat.total) * 100),
-        })
-      );
-      if (!subjects.length) return FALLBACK_CONFIG;
-
-      const weakest = subjects.reduce((min, item) =>
-        item.value < min.value ? item : min
-      );
-      const strongest = subjects.reduce((max, item) =>
-        item.value > max.value ? item : max
-      );
-
-      return {
-        primaryFocus: weakest.label,
-        primaryShare: 70,
-        secondaryFocus: strongest.label,
-        secondaryShare: 30,
-        difficultyFrom: "Easy",
-        difficultyTo: "Medium",
-        strategy: "Remedial Reinforcement",
-        timeLimit: FALLBACK_CONFIG.timeLimit,
-        questions: 50,
-      };
-    } catch {
-      return FALLBACK_CONFIG;
-    }
-  }, [examHistory]);
-
   const targetLicensure = profile?.target_licensure || "LET";
   const isLET = targetLicensure === "LET";
   const specialization =
@@ -129,6 +114,57 @@ export default function ExamPreview() {
   const licensureSubjects = Array.isArray(targetOption?.subjects)
     ? targetOption.subjects
     : [];
+  const filteredHistory = useMemo(() => {
+    return examHistory.filter(
+      (entry) =>
+        String(entry?.exam_type || "").trim().toUpperCase() ===
+        String(targetLicensure).trim().toUpperCase()
+    );
+  }, [examHistory, targetLicensure]);
+  const config = useMemo(() => {
+    const fallback = buildFallbackConfig(targetLicensure, licensureSubjects);
+    if (!filteredHistory.length) return fallback;
+    try {
+      const latest = filteredHistory[0];
+      if (!latest || !latest.subject_performance) return fallback;
+
+      const subjects = Object.entries(latest.subject_performance)
+        .map(([label, stat]) => ({
+          label,
+          value: Math.round((stat.correct / stat.total) * 100),
+        }))
+        .filter((item) =>
+          licensureSubjects.length
+            ? licensureSubjects.some(
+                (subject) => subject.trim().toUpperCase() === item.label.trim().toUpperCase()
+              )
+            : true
+        );
+
+      if (!subjects.length) return fallback;
+
+      const weakest = subjects.reduce((min, item) =>
+        item.value < min.value ? item : min
+      );
+      const strongest = subjects.reduce((max, item) =>
+        item.value > max.value ? item : max
+      );
+
+      return {
+        primaryFocus: weakest.label,
+        primaryShare: 70,
+        secondaryFocus: strongest.label,
+        secondaryShare: 30,
+        difficultyFrom: "Easy",
+        difficultyTo: "Medium",
+        strategy: "Remedial Reinforcement",
+        timeLimit: fallback.timeLimit,
+        questions: fallback.questions,
+      };
+    } catch {
+      return fallback;
+    }
+  }, [filteredHistory, licensureSubjects, targetLicensure]);
   const perSubjectItems = licensureSubjects.length
     ? Math.floor(questionCount / licensureSubjects.length)
     : 0;
