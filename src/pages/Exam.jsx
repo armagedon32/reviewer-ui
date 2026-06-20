@@ -26,6 +26,7 @@ export default function Exam() {
   const minutesLeft =
     timeLeft !== null ? Math.floor(timeLeft / 60) : timeLimitMinutes;
   const secondsLeft = timeLeft !== null ? timeLeft % 60 : 0;
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const closeModal = () =>
     setModal((prev) => ({
@@ -279,43 +280,71 @@ export default function Exam() {
 
         <div className="exam-grid">
           <section className="exam-card exam-questions">
-            {sortedQuestions.map((q, i) => {
-              const prev = sortedQuestions[i - 1];
-              const showSection = q.section && (!prev || prev.section !== q.section);
+            {(() => {
+              const q = sortedQuestions[currentIndex];
+              if (!q) return null;
+              const prev = sortedQuestions[currentIndex - 1];
+              const showSection =
+                q.section && (!prev || prev.section !== q.section);
               return (
-              <div key={q.id} className="exam-question">
-                {showSection && (
-                  <div className="exam-section">
-                    <span className="exam-section-label">{q.section}</span>
+                <div className="exam-question">
+                  {showSection && (
+                    <div className="exam-section">
+                      <span className="exam-section-label">{q.section}</span>
+                    </div>
+                  )}
+                  <div className="exam-question-header">
+                    <p className="exam-question-title">
+                      {currentIndex + 1}. {q.question}
+                    </p>
                   </div>
-                )}
-                <div className="exam-question-header">
-                  <p className="exam-question-title">
-                    {i + 1}. {q.question}
-                  </p>
+                  <div className="exam-options">
+                    {[
+                      { key: "A", value: q.a },
+                      { key: "B", value: q.b },
+                      { key: "C", value: q.c },
+                      { key: "D", value: q.d },
+                    ].map((option) => (
+                      <label key={option.key} className="exam-option">
+                        <input
+                          type="radio"
+                          name={q.id}
+                          onChange={() => handleChange(q.id, option.key)}
+                          checked={answers[q.id] === option.key}
+                        />
+                        <span className="exam-option-label">{option.key}.</span>
+                        <span>{option.value}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-                <div className="exam-options">
-                  {[
-                    { key: "A", value: q.a },
-                    { key: "B", value: q.b },
-                    { key: "C", value: q.c },
-                    { key: "D", value: q.d },
-                  ].map((option) => (
-                    <label key={option.key} className="exam-option">
-                      <input
-                        type="radio"
-                        name={q.id}
-                        onChange={() => handleChange(q.id, option.key)}
-                        checked={answers[q.id] === option.key}
-                      />
-                      <span className="exam-option-label">{option.key}.</span>
-                      <span>{option.value}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            );
-            })}
+              );
+            })()}
+            <div className="exam-navigation">
+              <button
+                className="exam-nav-btn"
+                onClick={() =>
+                  setCurrentIndex((prev) => Math.max(0, prev - 1))
+                }
+                disabled={currentIndex === 0}
+              >
+                Previous
+              </button>
+              <span className="exam-nav-counter">
+                {currentIndex + 1} / {questions.length}
+              </span>
+              <button
+                className="exam-nav-btn"
+                onClick={() =>
+                  setCurrentIndex((prev) =>
+                    Math.min(questions.length - 1, prev + 1)
+                  )
+                }
+                disabled={currentIndex === questions.length - 1}
+              >
+                Next
+              </button>
+            </div>
           </section>
 
           <aside className="exam-card exam-sidebar">

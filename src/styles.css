@@ -1722,6 +1722,51 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.exam-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.exam-nav-btn {
+  width: auto;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #0f172a;
+  border: none;
+  cursor: pointer;
+  box-shadow: none;
+  font-size: 14px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.exam-nav-btn:hover:not(:disabled) {
+  background: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.exam-nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.exam-nav-counter {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  min-width: 70px;
+  text-align: center;
+}
+
 .exam-preview-page .exam-card {
   max-width: 900px;
 }

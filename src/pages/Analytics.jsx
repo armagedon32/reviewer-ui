@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../auth";
-import { getAppSettingsApi, getExamHistoryApi, getProfileApi } from "../api";
+import { getAppSettingsApi, getExamHistoryApi, getProfileApi, getReadinessApi } from "../api";
 import { getSystemLogo } from "../systemLogo";
 
 export default function Analytics() {
@@ -11,6 +11,7 @@ export default function Analytics() {
   const [profile, setProfile] = useState(null);
   const [examHistory, setExamHistory] = useState([]);
   const [appSettings, setAppSettings] = useState(null);
+  const [readinessPrediction, setReadinessPrediction] = useState(null);
 
   useEffect(() => {
     const historyKey = user?.email ? `exam_history_${user.email}` : "exam_history";
@@ -43,6 +44,12 @@ export default function Analytics() {
     getAppSettingsApi()
       .then((data) => setAppSettings(data))
       .catch(() => setAppSettings(null));
+  }, []);
+
+  useEffect(() => {
+    getReadinessApi()
+      .then((data) => setReadinessPrediction(data))
+      .catch(() => setReadinessPrediction(null));
   }, []);
 
   const latestExam = examHistory[0] || null;
@@ -125,20 +132,8 @@ export default function Analytics() {
       )
     : null;
 
-  const readinessSteps = 2;
-  const latestScore = latestExam?.percentage ?? 0;
-  const prevScore = examHistory.length > 1 ? examHistory[1].percentage : latestScore;
-  const baseDelta = latestScore - prevScore;
-  const projectedScores = [];
-  let projected = latestScore;
-  let delta = baseDelta;
-  for (let i = 0; i < readinessSteps; i += 1) {
-    delta *= 0.7;
-    projected += delta;
-    projectedScores.push(Math.max(0, Math.min(100, Math.round(projected))));
-  }
-  const readinessLow = projectedScores.length ? Math.min(...projectedScores) : latestScore;
-  const readinessHigh = projectedScores.length ? Math.max(...projectedScores) : latestScore;
+  const readinessLow = readinessPrediction?.readiness_low ?? 0;
+  const readinessHigh = readinessPrediction?.readiness_high ?? 0;
 
   const trendStyleFor = (percentage) => {
     if (percentage >= masteryThreshold) {
@@ -447,9 +442,12 @@ export default function Analytics() {
                     Predicted Readiness: {readinessLow}% - {readinessHigh}%
                   </div>
                   <ul className="forecast-bullets">
-                    <li>Recent performance: {latestScore}% (latest exam)</li>
-                    <li>Improvement velocity: {Math.round(baseDelta)}% per attempt</li>
-                    <li>Diminishing gains assumed across {readinessSteps} future attempts</li>
+                    <li>Estimated rating: {readinessPrediction?.estimated_rating ?? 0}</li>
+                    <li>Trend: {readinessPrediction?.trend ?? 0}% per attempt</li>
+                    <li>Risk level: {readinessPrediction?.risk_level ?? "—"}</li>
+                    {readinessPrediction?.weak_subjects?.length ? (
+                      <li>Weak subjects: {readinessPrediction.weak_subjects.join(", ")}</li>
+                    ) : null}
                   </ul>
                 </div>
               </>

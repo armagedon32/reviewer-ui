@@ -207,6 +207,17 @@ export async function listUsersApi() {
   return data;
 }
 
+export async function getReadinessApi() {
+  const res = await fetch(`${API_URL}/readiness/prediction`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load readiness prediction");
+  }
+  return data;
+}
+
 export async function getExamHistoryApi() {
   const res = await fetch(`${API_URL}/exam/history`, {
     headers: authHeaders(),

@@ -8,6 +8,7 @@ import {
   getExamStatsApi,
   getNextRecommendationApi,
   getProfileApi,
+  getReadinessApi,
   listUsersApi,
   requestAccessApi,
 } from "../api";
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const [activeUserCounts, setActiveUserCounts] = useState(null);
   const [appSettings, setAppSettings] = useState(null);
   const [rlRecommendation, setRlRecommendation] = useState(null);
+  const [readinessPrediction, setReadinessPrediction] = useState(null);
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -231,6 +233,12 @@ export default function Dashboard() {
           }
         }
       });
+  }, []);
+
+  useEffect(() => {
+    getReadinessApi()
+      .then((data) => setReadinessPrediction(data))
+      .catch(() => setReadinessPrediction(null));
   }, []);
 
   useEffect(() => {
@@ -481,20 +489,10 @@ export default function Dashboard() {
         examHistory.reduce((sum, entry) => sum + entry.percentage, 0) / examHistory.length
       )
     : 0;
-  const readinessSteps = 2;
   const latestScore = latestExam?.percentage ?? 0;
-  const prevScore = examHistory.length > 1 ? examHistory[1].percentage : latestScore;
-  const baseDelta = latestScore - prevScore;
-  const projectedScores = [];
-  let projected = latestScore;
-  let delta = baseDelta;
-  for (let i = 0; i < readinessSteps; i += 1) {
-    delta *= 0.7; // diminishing returns
-    projected += delta;
-    projectedScores.push(Math.max(0, Math.min(100, Math.round(projected))));
-  }
-  const readinessLow = projectedScores.length ? Math.min(...projectedScores) : latestScore;
-  const readinessHigh = projectedScores.length ? Math.max(...projectedScores) : latestScore;
+
+  const readinessLow = readinessPrediction?.readiness_low ?? 0;
+  const readinessHigh = readinessPrediction?.readiness_high ?? 0;
 
   // AI interpretation: map latest exam percentage to a mastery band.
   const badge =
@@ -948,8 +946,11 @@ export default function Dashboard() {
                           </div>
                           <ul className="forecast-bullets">
                             <li>Recent performance: {latestScore}% (latest exam)</li>
-                            <li>Improvement velocity: {Math.round(baseDelta)}% per attempt</li>
-                            <li>Diminishing gains assumed across {readinessSteps} future attempts</li>
+                            <li>Trend: {readinessPrediction?.trend || "stable"}</li>
+                            <li>Attempts analyzed: {readinessPrediction?.attempts || 0}</li>
+                            {readinessPrediction?.weak_subjects?.length ? (
+                              <li>Weak subjects: {readinessPrediction.weak_subjects.join(", ")}</li>
+                            ) : null}
                           </ul>
                         </div>
                       </>
