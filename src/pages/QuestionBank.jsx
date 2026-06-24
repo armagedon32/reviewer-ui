@@ -340,10 +340,10 @@ export default function QuestionBank() {
           <div className="question-panel">
             <div className="panel-box">
               <div className="panel-title">
-                Bulk upload ({activeTrack} CSV / TXT)
+                Bulk upload ({activeTrack} CSV)
               </div>
               <p className="panel-hint">
-                Upload a CSV or TXT file with headers: exam_type,subject,topic,difficulty,question,a,b,c,d,answer
+                Upload a CSV with headers: exam_type,subject,topic,difficulty,question,a,b,c,d,answer
               </p>
               <p className="panel-hint" style={{ marginTop: 4 }}>
                 All rows will be tagged as <strong>{activeTrack}</strong>.
@@ -355,7 +355,7 @@ export default function QuestionBank() {
               </div>
               <input
                 type="file"
-                accept=".csv,.txt"
+                accept=".csv"
                 multiple
                 onChange={handleUpload}
                 disabled={uploading}
