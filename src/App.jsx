@@ -68,6 +68,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/question-bank"
+          element={
+            <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+              <QuestionBank />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/instructor-performance"

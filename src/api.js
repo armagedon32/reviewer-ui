@@ -341,13 +341,27 @@ export async function submitExamApi(answers) {
 // Question management (admin/instructor)
 // ============================
 
-export async function listQuestionsApi() {
-  const res = await fetch(`${API_URL}/questions`, {
+export async function listQuestionsApi(examType) {
+  const url = examType
+    ? `${API_URL}/questions?exam_type=${encodeURIComponent(examType)}`
+    : `${API_URL}/questions`;
+  const res = await fetch(url, {
     headers: authHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to load questions");
+  }
+  return res.json();
+}
+
+export async function getQuestionsSummaryApi() {
+  const res = await fetch(`${API_URL}/questions/summary`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load question summary");
   }
   return res.json();
 }

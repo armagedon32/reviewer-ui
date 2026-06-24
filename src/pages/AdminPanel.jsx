@@ -40,6 +40,15 @@ export default function AdminPanel() {
             <button type="button" onClick={() => navigate("/admin/audit-logs")}>
               Audit Logs
             </button>
+            <button type="button" onClick={() => navigate("/question-bank")}>
+              Question Bank
+            </button>
+            <button type="button" onClick={() => navigate("/question-bank?track=LET")}>
+              LET Questions
+            </button>
+            <button type="button" onClick={() => navigate("/question-bank?track=CPA")}>
+              CPA Questions
+            </button>
           </div>
         </section>
       </div>
