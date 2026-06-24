@@ -1,5 +1,5 @@
-import { useEffect, useSearchParams, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   createQuestionApi,
   listQuestionsApi,
