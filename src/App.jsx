@@ -18,6 +18,7 @@ import AdminRegister from "./pages/AdminRegister";
 import Analytics from "./pages/Analytics";
 import ChangePassword from "./pages/ChangePassword";
 import InstructorPerformance from "./pages/InstructorPerformance";
+import InstructorExamSettings from "./pages/InstructorExamSettings";
 import InstructorExamPreview from "./pages/InstructorExamPreview";
 import ApprovalPending from "./pages/ApprovalPending";
 import CertificationStatus from "./pages/CertificationStatus";
@@ -160,6 +161,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["instructor", "admin"]}>
               <InstructorExamPreview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/instructor/exam-settings"
+          element={
+            <ProtectedRoute allowedRoles={["instructor"]}>
+              <InstructorExamSettings />
             </ProtectedRoute>
           }
         />

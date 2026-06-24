@@ -1129,10 +1129,17 @@ export default function Dashboard() {
                   </div>
                 </div>
                   <div className="action-grid">
-                    <button onClick={() => navigate("/questions")}>Manage Question Bank</button>
-                   <button onClick={() => navigate("/instructor-performance")}>
+                    <button onClick={() => navigate("/instructor/exam-settings")}>
+                      {instructorProgram} Exam Setup
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/questions?track=${instructorProgram}`)}
+                    >
+                      {instructorProgram} Question Bank
+                    </button>
+                    <button onClick={() => navigate("/instructor-performance")}>
                       View Student Performance
-                   </button>
+                    </button>
 
                   </div>
                 </section>

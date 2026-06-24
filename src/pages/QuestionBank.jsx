@@ -79,6 +79,12 @@ export default function QuestionBank() {
     }
   }, [isInstructor, instructorProgram]);
 
+  useEffect(() => {
+    if (isInstructor && activeTrack !== instructorProgram) {
+      setActiveTrack(instructorProgram);
+    }
+  }, [isInstructor, activeTrack, instructorProgram]);
+
   const loadQuestions = async () => {
     setFetching(true);
     try {
@@ -314,6 +320,8 @@ export default function QuestionBank() {
             type="button"
             className={`track-tab ${activeTrack === "LET" ? "active" : ""}`}
             onClick={() => setActiveTrack("LET")}
+            disabled={isInstructor && instructorProgram !== "LET"}
+            style={isInstructor && instructorProgram !== "LET" ? { opacity: 0.4, cursor: "not-allowed" } : {}}
           >
             LET ({summary.LET})
           </button>
@@ -321,6 +329,8 @@ export default function QuestionBank() {
             type="button"
             className={`track-tab ${activeTrack === "CPA" ? "active" : ""}`}
             onClick={() => setActiveTrack("CPA")}
+            disabled={isInstructor && instructorProgram !== "CPA"}
+            style={isInstructor && instructorProgram !== "CPA" ? { opacity: 0.4, cursor: "not-allowed" } : {}}
           >
             CPA ({summary.CPA})
           </button>
