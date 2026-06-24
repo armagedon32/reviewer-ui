@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getAppSettingsApi, getProfileApi, requestAccessApi, saveProfileApi } from "../api";
 import { getUser } from "../auth";
 import { DEFAULT_TARGET_LICENSURE_OPTIONS } from "../licensureDefaults";
@@ -25,6 +25,7 @@ export default function ProfileSetup({ onSaved, onCancel }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [initialLoading, setInitialLoading] = useState(true);
   const initialProfileRef = useRef(null);
 
   useEffect(() => {
@@ -34,8 +35,11 @@ export default function ProfileSetup({ onSaved, onCancel }) {
   }, [user?.email, emailAddress]);
 
   useEffect(() => {
+    let cancelled = false;
+    setInitialLoading(true);
     getAppSettingsApi()
       .then((data) => {
+        if (cancelled) return;
         setAppSettings(data);
         const options =
           Array.isArray(data?.target_licensure_options) && data.target_licensure_options.length
@@ -43,27 +47,40 @@ export default function ProfileSetup({ onSaved, onCancel }) {
             : DEFAULT_TARGET_LICENSURE_OPTIONS;
         setLicensureOptions(options);
       })
-      .catch(() => setAppSettings(null));
+      .catch(() => {
+        if (!cancelled) setAppSettings(null);
+      })
+      .finally(() => {
+        if (!cancelled) setInitialLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const ruleMap = licensureOptions.reduce((acc, option) => {
-    const name = String(option?.name || "").trim();
-    const subjects = Array.isArray(option?.subjects)
-      ? option.subjects.filter(Boolean)
-      : [];
-    if (!name || !subjects.length) return acc;
-    acc[name] = {
-      subjects,
-      passingThreshold: Number(option?.passing_threshold ?? 75),
-    };
-    return acc;
-  }, {});
+  const ruleMap = useMemo(() => {
+    return licensureOptions.reduce((acc, option) => {
+      const name = String(option?.name || "").trim();
+      const subjects = Array.isArray(option?.subjects)
+        ? option.subjects.filter(Boolean)
+        : [];
+      if (!name || !subjects.length) return acc;
+      acc[name] = {
+        subjects,
+        passingThreshold: Number(option?.passing_threshold ?? 75),
+      };
+      return acc;
+    }, {});
+  }, [licensureOptions]);
 
-  const activeRule =
-    ruleMap[targetLicensure] ||
-    ruleMap.LET ||
-    Object.values(ruleMap)[0] ||
-    { subjects: [], passingThreshold: 75 };
+  const activeRule = useMemo(() => {
+    return (
+      ruleMap[targetLicensure] ||
+      ruleMap.LET ||
+      Object.values(ruleMap)[0] ||
+      { subjects: [], passingThreshold: 75 }
+    );
+  }, [ruleMap, targetLicensure]);
 
   useEffect(() => {
     const rule = activeRule;
@@ -88,8 +105,11 @@ export default function ProfileSetup({ onSaved, onCancel }) {
   }, [licensureOptions, targetLicensure, ruleMap]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
+      if (!user?.email) return;
       const existing = await getProfileApi();
+      if (cancelled) return;
       if (existing) {
         setStudentIdNumber(existing.student_id_number || "");
         setFirstName(existing.first_name || "");
@@ -113,7 +133,10 @@ export default function ProfileSetup({ onSaved, onCancel }) {
         initialProfileRef.current = null;
       }
     })();
-  }, [user?.email, appSettings, ruleMap]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, ruleMap]);
 
   async function handleSave(e) {
     e.preventDefault();
@@ -189,7 +212,7 @@ export default function ProfileSetup({ onSaved, onCancel }) {
             ? `Profile updated: ${changes.join("; ")}`
             : "Profile updated with no field changes.";
         }
-        await requestAccessApi(detail);
+        requestAccessApi(detail).catch(() => {});
       }
       onSaved?.(saved || payload);
     } catch (err) {
@@ -211,7 +234,10 @@ export default function ProfileSetup({ onSaved, onCancel }) {
     <div style={{ width: "100%" }}>
       <h3>Student Profile & Exam Setup</h3>
 
-      <form onSubmit={handleSave}>
+      {initialLoading ? (
+        <p style={{ color: "#64748b", padding: "16px 0" }}>Loading profile data...</p>
+      ) : (
+        <form onSubmit={handleSave}>
         <label>Student ID Number</label>
         <input
           value={studentIdNumber}
@@ -329,6 +355,7 @@ export default function ProfileSetup({ onSaved, onCancel }) {
           )}
         </div>
       </form>
+      )}
     </div>
   );
 }
