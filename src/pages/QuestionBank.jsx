@@ -153,22 +153,35 @@ export default function QuestionBank() {
     let addedTotal = 0;
     let skippedTotal = 0;
     let failed = 0;
+    let errorDetails = [];
     for (const file of files) {
       try {
         const result = await uploadQuestionsCsv(file);
         addedTotal += result.added || 0;
         skippedTotal += result.skipped || 0;
-      } catch {
+        if (Array.isArray(result.errors) && result.errors.length) {
+          errorDetails.push(
+            `${file.name}: ` + result.errors.map((err) => err.reason).join("; ")
+          );
+        }
+      } catch (err) {
         failed += 1;
+        errorDetails.push(`${file.name}: ${err?.message || "Upload failed"}`);
       }
     }
 
+    const hasErrors = failed > 0 || errorDetails.length > 0;
     showNotice({
-      type: failed ? "warning" : "success",
-      title: failed ? "Upload completed with errors" : "Upload complete",
-      message: failed
-        ? `Added ${addedTotal} questions. Failed to upload ${failed} file(s).`
-        : `Added ${addedTotal} questions from ${files.length} file(s).${skippedTotal ? ` Skipped ${skippedTotal} invalid row(s).` : ""}`,
+      type: hasErrors ? "warning" : "success",
+      title: hasErrors ? "Upload completed with issues" : "Upload complete",
+      message: [
+        `Added ${addedTotal} question(s) from ${files.length} file(s).`,
+        skippedTotal ? `Skipped ${skippedTotal} invalid row(s).` : "",
+        ...errorDetails.slice(0, 5),
+        errorDetails.length > 5 ? `...and ${errorDetails.length - 5} more error(s).` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
       actions: [
         {
           label: "Refresh list",
