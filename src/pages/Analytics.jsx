@@ -57,7 +57,7 @@ export default function Analytics() {
   const subjectBreakdown = Object.keys(latestSubjects).length
     ? Object.entries(latestSubjects).map(([label, stat]) => ({
         label,
-        value: Math.round((stat.correct / stat.total) * 100),
+        value: stat.total > 1 ? Math.round((stat.correct / stat.total) * 100) : 0,
       }))
     : [];
 
@@ -468,7 +468,8 @@ export default function Analytics() {
                 <div key={`${entry.date}-${index}`} className="history-row">
                   <div>
                     <p className="history-title">
-                      {entry.result} {entry.percentage}%
+                      {entry.result}{" "}
+                      {entry.total > 1 ? `${entry.percentage}%` : `${entry.score}/${entry.total}`}
                     </p>
                     <p className="history-subtitle">
                       {new Date(entry.date).toLocaleString()}

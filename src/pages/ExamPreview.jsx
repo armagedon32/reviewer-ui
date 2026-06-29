@@ -131,7 +131,7 @@ export default function ExamPreview() {
       const subjects = Object.entries(latest.subject_performance)
         .map(([label, stat]) => ({
           label,
-          value: Math.round((stat.correct / stat.total) * 100),
+          value: stat.total > 1 ? Math.round((stat.correct / stat.total) * 100) : 0,
         }))
         .filter((item) =>
           licensureSubjects.length

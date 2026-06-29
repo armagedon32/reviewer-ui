@@ -172,7 +172,7 @@ export default function CertificationStatus() {
     const masteryPerSubject = Object.entries(subjectTotals)
       .map(([subject, stat]) => ({
         subject,
-        percent: stat.total ? Math.round((stat.correct / stat.total) * 100) : 0,
+        percent: stat.total > 1 ? Math.round((stat.correct / stat.total) * 100) : 0,
       }))
       .sort((a, b) => b.percent - a.percent);
 

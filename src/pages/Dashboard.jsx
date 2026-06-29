@@ -292,7 +292,7 @@ export default function Dashboard() {
   const subjectBreakdown = Object.keys(latestSubjects).length
     ? Object.entries(latestSubjects).map(([label, stat]) => ({
         label,
-        value: Math.round((stat.correct / stat.total) * 100),
+        value: stat.total > 1 ? Math.round((stat.correct / stat.total) * 100) : 0,
       }))
     : [];
 
@@ -332,7 +332,9 @@ export default function Dashboard() {
       )
     : null;
   const latestResultText = latestExam
-    ? `${latestExam.percentage}% (${latestExam.score}/${latestExam.total})`
+    ? latestExam.total > 1
+      ? `${latestExam.percentage}% (${latestExam.score}/${latestExam.total})`
+      : `${latestExam.score}/${latestExam.total}`
     : "-";
   const effectiveAccessDecision =
     user.role === "admin" ? "approved" : accessDecision || "pending";
@@ -971,9 +973,10 @@ export default function Dashboard() {
                         {examHistory.map((entry, index) => (
                           <div key={`${entry.date}-${index}`} className="history-row">
                             <div>
-                              <p className="history-title">
-                                {entry.result} • {entry.percentage}%
-                              </p>
+                               <p className="history-title">
+                                 {entry.result} •{" "}
+                                 {entry.total > 1 ? `${entry.percentage}%` : `${entry.score}/${entry.total}`}
+                               </p>
                               <p className="history-subtitle">
                                 {new Date(entry.date).toLocaleString()}
                               </p>
@@ -1311,8 +1314,9 @@ export default function Dashboard() {
                             </p>
                           </div>
                           <span className="history-score">
-                            {attempt.percentage ?? "-"}% ({attempt.score ?? "-"}/
-                            {attempt.total ?? "-"})
+                            {attempt.total > 1
+                              ? `${attempt.percentage ?? "-"}% (${attempt.score ?? "-"}/${attempt.total ?? "-"})`
+                              : `${attempt.score ?? "-"}/${attempt.total ?? "-"}`}
                           </span>
                         </div>
                       ))}

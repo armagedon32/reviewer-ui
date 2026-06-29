@@ -184,7 +184,7 @@ export default function Exam() {
         <div className="card">
           <h2>Exam Result</h2>
           <p><b>Score:</b> {result.score} / {result.total}</p>
-          <p><b>Percentage:</b> {result.percentage}%</p>
+          {result.total > 1 && <p><b>Percentage:</b> {result.percentage}%</p>}
           <p><b>Result:</b> {result.result}</p>
 
           <h3>Subject Performance</h3>
