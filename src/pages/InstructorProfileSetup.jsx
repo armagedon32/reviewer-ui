@@ -11,6 +11,7 @@ export default function InstructorProfileSetup({ onSaved, onCancel }) {
   const [department, setDepartment] = useState("");
   const [position, setPosition] = useState("Instructor");
   const [program, setProgram] = useState("LET");
+  const [letTrack, setLetTrack] = useState("Elementary");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const initialProfileRef = useRef(null);
@@ -29,6 +30,7 @@ export default function InstructorProfileSetup({ onSaved, onCancel }) {
       setDepartment(parsed.department || "");
       setPosition(parsed.position || "Instructor");
       setProgram(parsed.program || "LET");
+      setLetTrack(parsed.let_track || "Elementary");
       initialProfileRef.current = parsed;
     } catch {
       setEmployeeId("");
@@ -53,6 +55,7 @@ export default function InstructorProfileSetup({ onSaved, onCancel }) {
         department: department.trim(),
         position,
         program,
+        let_track: program === "LET" ? letTrack : "",
       };
       if (email) {
         const previous = initialProfileRef.current;
@@ -114,10 +117,23 @@ export default function InstructorProfileSetup({ onSaved, onCancel }) {
         <input value={position} onChange={(e) => setPosition(e.target.value)} required />
 
         <label>Program</label>
-        <select value={program} onChange={(e) => setProgram(e.target.value)}>
+        <select value={program} onChange={(e) => {
+          setProgram(e.target.value);
+          if (e.target.value !== "LET") setLetTrack("");
+        }}>
           <option value="LET">LET</option>
           <option value="CPA">CPA</option>
         </select>
+
+        {program === "LET" && (
+          <>
+            <label>LET Track</label>
+            <select value={letTrack} onChange={(e) => setLetTrack(e.target.value)}>
+              <option value="Elementary">Elementary</option>
+              <option value="Secondary">Secondary</option>
+            </select>
+          </>
+        )}
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 

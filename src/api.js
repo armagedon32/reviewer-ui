@@ -78,8 +78,11 @@ export async function startExamApi() {
   return res.json();
 }
 
-export async function getClassAnalyticsApi(program) {
-  const query = program ? `?program=${encodeURIComponent(program)}` : "";
+export async function getClassAnalyticsApi(program, letTrack) {
+  const params = new URLSearchParams();
+  if (program) params.set("program", program);
+  if (letTrack) params.set("let_track", letTrack);
+  const query = params.toString() ? `?${params.toString()}` : "";
   const res = await fetch(`${API_URL}/exam/class-analytics${query}`, {
     headers: authHeaders(),
   });

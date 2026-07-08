@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getClassAnalyticsApi } from "../api";
 import { getSystemLogo } from "../systemLogo";
+import { getUser } from "../auth";
 
 export default function ClassAnalytics() {
   const logo = getSystemLogo();
@@ -10,29 +11,33 @@ export default function ClassAnalytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [program, setProgram] = useState("");
+  const [letTrack, setLetTrack] = useState("");
   const [sortField, setSortField] = useState("latest_score");
   const [sortDir, setSortDir] = useState("asc");
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("instructor_profile_" + JSON.parse(localStorage.getItem("user") || "{}").email);
+    const user = getUser();
+    const email = user?.email || "";
+    const stored = localStorage.getItem("instructor_profile_" + email);
     if (stored) {
       try {
         const p = JSON.parse(stored);
         setProgram(p.program || "");
+        setLetTrack(p.let_track || "");
       } catch {}
     }
   }, []);
 
   useEffect(() => {
     loadData();
-  }, [program]);
+  }, [program, letTrack]);
 
   async function loadData() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getClassAnalyticsApi(program || undefined);
+      const result = await getClassAnalyticsApi(program || undefined, letTrack || undefined);
       setData(result);
     } catch (e) {
       setError(e.message || "Unknown error — check console (F12) for details");
