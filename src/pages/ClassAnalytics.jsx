@@ -35,7 +35,8 @@ export default function ClassAnalytics() {
       const result = await getClassAnalyticsApi(program || undefined);
       setData(result);
     } catch (e) {
-      setError(e.message);
+      setError(e.message || "Unknown error — check console (F12) for details");
+      console.error("ClassAnalytics fetch error:", e);
     } finally {
       setLoading(false);
     }
