@@ -12,6 +12,7 @@ export default function ClassAnalytics() {
   const [error, setError] = useState(null);
   const [program, setProgram] = useState("");
   const [letTrack, setLetTrack] = useState("");
+  const [manualProgram, setManualProgram] = useState("");
   const [sortField, setSortField] = useState("latest_score");
   const [sortDir, setSortDir] = useState("asc");
   const [search, setSearch] = useState("");
@@ -24,20 +25,23 @@ export default function ClassAnalytics() {
       try {
         const p = JSON.parse(stored);
         setProgram(p.program || "");
+        setManualProgram(p.program || "");
         setLetTrack(p.let_track || "");
       } catch {}
     }
   }, []);
 
+  const activeProgram = manualProgram || program;
+
   useEffect(() => {
     loadData();
-  }, [program, letTrack]);
+  }, [activeProgram, letTrack]);
 
   async function loadData() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getClassAnalyticsApi(program || undefined, letTrack || undefined);
+      const result = await getClassAnalyticsApi(activeProgram || undefined, letTrack || undefined);
       setData(result);
     } catch (e) {
       setError(e.message || "Unknown error — check console (F12) for details");
@@ -87,13 +91,42 @@ export default function ClassAnalytics() {
               <p className="dashboard-kicker">Instructor Tools</p>
               <h2 className="dashboard-title">Class-Level Performance Analytics</h2>
               <p className="dashboard-email">
-                {program ? `Program: ${program}` : "All programs"}
+                Program: <strong>{activeProgram || "All"}</strong>
+                {activeProgram === "LET" && letTrack && ` (${letTrack})`}
               </p>
             </div>
           </div>
-          <button className="status-pill subtle" onClick={() => navigate("/instructor-performance")}>
-            Back
-          </button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <select
+              value={manualProgram}
+              onChange={e => { setManualProgram(e.target.value); if (e.target.value !== "LET") setLetTrack(""); }}
+              style={{
+                padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)",
+                fontSize: 13, background: "var(--surface)", color: "var(--text)",
+              }}
+            >
+              <option value="">All Programs</option>
+              <option value="LET">LET</option>
+              <option value="CPA">CPA</option>
+            </select>
+            {manualProgram === "LET" && (
+              <select
+                value={letTrack}
+                onChange={e => setLetTrack(e.target.value)}
+                style={{
+                  padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)",
+                  fontSize: 13, background: "var(--surface)", color: "var(--text)",
+                }}
+              >
+                <option value="">All Tracks</option>
+                <option value="Elementary">Elementary</option>
+                <option value="Secondary">Secondary</option>
+              </select>
+            )}
+            <button className="status-pill subtle" onClick={() => navigate("/instructor-performance")}>
+              Back
+            </button>
+          </div>
         </header>
 
         {loading && <p className="history-empty">Loading analytics...</p>}
