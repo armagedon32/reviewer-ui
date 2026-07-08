@@ -78,6 +78,18 @@ export async function startExamApi() {
   return res.json();
 }
 
+export async function getClassAnalyticsApi(program) {
+  const query = program ? `?program=${encodeURIComponent(program)}` : "";
+  const res = await fetch(`${API_URL}/exam/class-analytics${query}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load class analytics");
+  }
+  return data;
+}
+
 export async function getExamStatsApi(program) {
   const query = program ? `?program=${encodeURIComponent(program)}` : "";
   const res = await fetch(`${API_URL}/exam/stats${query}`, {

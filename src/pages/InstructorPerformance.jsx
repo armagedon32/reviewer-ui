@@ -34,7 +34,9 @@ export default function InstructorPerformance() {
             </button>
           </div>
           <div className="action-grid">
-            <button>Class-Level Performance Analytics</button>
+            <button onClick={() => navigate("/instructor/class-analytics")}>
+              Class-Level Performance Analytics
+            </button>
             <button>Individual Student Performance List</button>
             <button>Topic-Based Strength and Weakness Analysis</button>
             <button>Performance Trend / Momentum Indicator</button>
