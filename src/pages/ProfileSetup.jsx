@@ -89,6 +89,8 @@ export default function ProfileSetup({ onSaved, onCancel }) {
     let subjects = baseSubjects;
     if (targetLicensure === "LET" && letTrack === "Elementary") {
       subjects = baseSubjects.filter((subject) => subject !== "Specialization");
+    } else if (targetLicensure === "LET" && letTrack === "Secondary") {
+      subjects = Array.from(new Set([...baseSubjects, "Specialization"]));
     }
     setRequiredPassingThreshold(rule.passingThreshold);
     setAssignedReviewSubjects((prev) => {

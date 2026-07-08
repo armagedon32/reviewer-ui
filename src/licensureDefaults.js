@@ -1,7 +1,13 @@
+// LET is stored as a single target_licensure value ("LET") for backend compatibility,
+// but it has two tracks with different subject coverage:
+//   - Elementary: GenEd + ProfEd (no Specialization)
+//   - Secondary: GenEd + ProfEd + Specialization
+// The track is captured in the student's `let_track` field, and Specialization is
+// added for Secondary in ProfileSetup. The base subjects below are track-neutral.
 export const DEFAULT_TARGET_LICENSURE_OPTIONS = [
   {
     name: "LET",
-    subjects: ["GenEd", "ProfEd", "Specialization"],
+    subjects: ["GenEd", "ProfEd"],
     passing_threshold: 75,
   },
   {
@@ -15,4 +21,3 @@ export const DEFAULT_TARGET_LICENSURE_OPTIONS = [
     passing_threshold: 80,
   },
 ];
-
