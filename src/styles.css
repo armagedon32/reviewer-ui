@@ -1342,6 +1342,11 @@ button:disabled {
   margin-bottom: 14px;
 }
 
+.info-grid {
+  display: grid;
+  gap: 14px;
+}
+
 .analytics-info-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

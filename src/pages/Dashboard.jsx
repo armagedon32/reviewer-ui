@@ -573,9 +573,11 @@ export default function Dashboard() {
           <div className="dashboard-intro">
             <img src={logo} alt="System logo" className="dashboard-logo" />
             <div className="dashboard-text">
-              <p className="dashboard-kicker">Welcome back</p>
+              <p className="dashboard-kicker">
+                {user.role === "student" ? "Student" : user.role === "instructor" ? "Instructor" : "Administrator"}
+              </p>
               <div className="dashboard-heading">
-                <h2 className="dashboard-title">{user.role.toUpperCase()} DASHBOARD</h2>
+                <h2 className="dashboard-title">Dashboard</h2>
                 <div className="dashboard-status">
                   <span className={statusClass}>{statusLabel}</span>
                   <span className="status-note">
@@ -1019,13 +1021,13 @@ export default function Dashboard() {
                       <div>
                         <p className="analytics-label">Best Subject</p>
                         <p className="analytics-value">
-                          {bestSubject ? `${bestSubject.label} ? ${bestSubject.value}%` : "-"}
+                          {bestSubject ? `${bestSubject.label} · ${bestSubject.value}%` : "-"}
                         </p>
                       </div>
                       <div>
                         <p className="analytics-label">Focus Subject</p>
                         <p className="analytics-value">
-                          {weakestSubject ? `${weakestSubject.label} ? ${weakestSubject.value}%` : "-"}
+                          {weakestSubject ? `${weakestSubject.label} · ${weakestSubject.value}%` : "-"}
                         </p>
                       </div>
                     </div>
@@ -1333,97 +1335,20 @@ export default function Dashboard() {
 
         {/* ADMIN */}
         {user.role === "admin" && (
-          <div className="dashboard-grid">
+          <div className="dashboard-grid" style={{ maxWidth: 480 }}>
             <section className="dashboard-card actions-card">
               <div className="card-header">
-                <h3>Admin Controls</h3>
-                <span className="status-note">System overview</span>
+                <h3>Admin Panel</h3>
+                <span className="status-pill subtle" onClick={() => navigate("/admin")} style={{ cursor: "pointer" }}>Open</span>
               </div>
+              <p className="status-note" style={{ margin: "8px 0 16px" }}>
+                Manage system settings, users, question bank, audit logs, and certification configuration.
+              </p>
               <div className="action-grid">
-                <button onClick={() => navigate("/admin")}>Admin Settings</button>
+                <button onClick={() => navigate("/admin")}>Go to Admin Panel</button>
                 <button onClick={() => navigate("/admin/certification-management")}>
                   Certification Management
                 </button>
-                <button>System Reports</button>
-              </div>
-            </section>
-            <section className="dashboard-card results-card">
-              <div className="card-header">
-                <h3>Platform Health</h3>
-                <span className="trend-pill positive">Stable</span>
-              </div>
-              <div className="results-list">
-                {subjectBreakdown.map((item) => (
-                  <div key={item.label} className="result-row">
-                    <span className="result-label">{item.label}</span>
-                    <div className="result-bar">
-                      <span style={{ width: `${item.value}%` }} />
-                    </div>
-                    <span className="result-score">{item.value}%</span>
-                  </div>
-                ))}
-              </div>
-              <div className="highlight-card">
-                <p className="highlight-title">Update</p>
-                <p className="highlight-text">
-                  System uptime at 99.9% with steady exam submissions.
-                </p>
-              </div>
-            </section>
-            <section className="dashboard-card active-users-card">
-              <div className="card-header">
-                <h3>Active Users</h3>
-                <span className="status-note">Currently active</span>
-              </div>
-              <div className="trend-metrics">
-                <div className="metric">
-                  <span className="metric-label">
-                    <svg
-                      className="metric-icon role-admin"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 3a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm0 9c4.2 0 7.5 2.3 7.5 5v2H4.5v-2c0-2.7 3.3-5 7.5-5Z" />
-                      <path d="M6 6.5 8 5l-1-2 2.2 1 .8-2 1 2.1 2.2-1-1 2 2 1.5-2.3.2-.7 2-1-1.9-2.2 1 .9-2.2L6 6.5Z" />
-                    </svg>
-                    Admins
-                  </span>
-                  <span className="metric-value">
-                    {activeUserCounts ? activeUserCounts.admin : "-"}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">
-                    <svg
-                      className="metric-icon role-instructor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path d="M4 6.5 12 3l8 3.5-8 3.5L4 6.5Z" />
-                      <path d="M6 10v4.2c0 2 3 3.8 6 3.8s6-1.8 6-3.8V10l-6 2.6L6 10Z" />
-                      <path d="M20 9v5a2 2 0 0 1-2 2h-1v-2h1V9h2Z" />
-                    </svg>
-                    Instructors
-                  </span>
-                  <span className="metric-value">
-                    {activeUserCounts ? activeUserCounts.instructor : "-"}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">
-                    <svg
-                      className="metric-icon role-student"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 3a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm-7 15c0-3 3.1-5 7-5s7 2 7 5v2H5v-2Z" />
-                    </svg>
-                    Students
-                  </span>
-                  <span className="metric-value">
-                    {activeUserCounts ? activeUserCounts.student : "-"}
-                  </span>
-                </div>
               </div>
             </section>
           </div>

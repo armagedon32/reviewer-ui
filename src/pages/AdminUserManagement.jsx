@@ -109,6 +109,28 @@ export default function AdminUserManagement() {
     setCreateForm((prev) => ({ ...prev, password: output }));
   };
 
+  const filteredStudentIds = useMemo(
+    () => filteredUsers.filter((u) => u.role === "student").map((u) => u.id),
+    [filteredUsers]
+  );
+
+  const allStudentsSelected = useMemo(
+    () => filteredStudentIds.length > 0 && filteredStudentIds.every((id) => selectedStudentIds.includes(id)),
+    [filteredStudentIds, selectedStudentIds]
+  );
+
+  const toggleSelectAll = () => {
+    if (allStudentsSelected) {
+      setSelectedStudentIds((prev) => prev.filter((id) => !filteredStudentIds.includes(id)));
+    } else {
+      setSelectedStudentIds((prev) => {
+        const set = new Set(prev);
+        filteredStudentIds.forEach((id) => set.add(id));
+        return [...set];
+      });
+    }
+  };
+
   const toggleStudentSelection = (id) => {
     setSelectedStudentIds((prev) =>
       prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]
@@ -383,7 +405,15 @@ export default function AdminUserManagement() {
           {filteredUsers.length ? (
             <>
               <div className="admin-user-header">
-                <span>Select</span>
+                <label className="admin-user-check">
+                  <input
+                    type="checkbox"
+                    checked={allStudentsSelected}
+                    onChange={toggleSelectAll}
+                    disabled={!filteredStudentIds.length}
+                    title={filteredStudentIds.length ? "Select all students" : "No students to select"}
+                  />
+                </label>
                 <span>User Details</span>
                 <span>Actions</span>
               </div>
