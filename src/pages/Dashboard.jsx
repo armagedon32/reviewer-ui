@@ -735,8 +735,38 @@ export default function Dashboard() {
                   </section>
                 </div>
 
-                {/* Second row: Improvement Trend + Readiness Forecast */}
+                {/* Second row: Readiness Forecast + Improvement Trend */}
                 <div className="dashboard-grid" style={{ marginBottom: 20 }}>
+                  <section className="dashboard-card" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                    <div className="card-header">
+                      <h3>Readiness Forecast</h3>
+                      <span className="status-pill subtle">Long-term</span>
+                    </div>
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "8px 0" }}>
+                      {readinessLow != null && readinessHigh != null ? (
+                        <>
+                          <div style={{ textAlign: "center", marginBottom: 12 }}>
+                            <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: "var(--accent)" }}>
+                              {readinessLow}%–{readinessHigh}%
+                            </p>
+                            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "2px 0 0" }}>Predicted Readiness</p>
+                          </div>
+                          <div className="forecast-card" style={{ border: "none", padding: 0, background: "none" }}>
+                            <ul className="forecast-bullets" style={{ margin: 0, padding: 0 }}>
+                              <li>Trend: {readinessPrediction?.trend || "stable"}</li>
+                              <li>Attempts analyzed: {readinessPrediction?.attempts || 0}</li>
+                              {readinessPrediction?.weak_subjects?.length ? (
+                                <li style={{ wordBreak: "break-word" }}>Weak subjects: {readinessPrediction.weak_subjects.join(", ")}</li>
+                              ) : null}
+                            </ul>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="history-empty" style={{ margin: 0 }}>Insufficient data</p>
+                      )}
+                    </div>
+                  </section>
+
                   <section className="dashboard-card progress-card">
                     <div className="card-header">
                       <h3>Improvement Trend</h3>
@@ -783,36 +813,6 @@ export default function Dashboard() {
                           {profile?.required_passing_threshold || (typeof appSettings?.passing_threshold_default === "number" ? `${appSettings.passing_threshold_default}%` : "75%")}
                         </span>
                       </div>
-                    </div>
-                  </section>
-
-                  <section className="dashboard-card" style={{ display: "flex", flexDirection: "column" }}>
-                    <div className="card-header">
-                      <h3>Readiness Forecast</h3>
-                      <span className="status-pill subtle">Long-term</span>
-                    </div>
-                    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "8px 0" }}>
-                      {readinessLow != null && readinessHigh != null ? (
-                        <>
-                          <div style={{ textAlign: "center", marginBottom: 12 }}>
-                            <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: "var(--accent)" }}>
-                              {readinessLow}%–{readinessHigh}%
-                            </p>
-                            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "2px 0 0" }}>Predicted Readiness</p>
-                          </div>
-                          <div className="forecast-card" style={{ border: "none", padding: 0, background: "none" }}>
-                            <ul className="forecast-bullets" style={{ margin: 0, padding: 0 }}>
-                              <li>Trend: {readinessPrediction?.trend || "stable"}</li>
-                              <li>Attempts analyzed: {readinessPrediction?.attempts || 0}</li>
-                              {readinessPrediction?.weak_subjects?.length ? (
-                                <li>Weak subjects: {readinessPrediction.weak_subjects.join(", ")}</li>
-                              ) : null}
-                            </ul>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="history-empty" style={{ margin: 0 }}>Insufficient data</p>
-                      )}
                     </div>
                   </section>
                 </div>
