@@ -604,7 +604,7 @@ export default function Dashboard() {
         {user.role === "student" && (
           <>
             {loadingProfile ? (
-              <div className="dashboard-card">Loading profile...</div>
+              <div className="dashboard-card" style={{ textAlign: "center", padding: 32 }}>Loading profile...</div>
             ) : !isApproved && !editingProfile ? (
               renderAccessGate()
             ) : editingProfile ? (
@@ -615,43 +615,67 @@ export default function Dashboard() {
                 />
               </div>
             ) : !profile ? (
-              <div className="dashboard-card">
-                <h3>Profile not set</h3>
+              <div className="dashboard-card" style={{ textAlign: "center", padding: 32 }}>
+                <h3 style={{ margin: 0 }}>Profile not set</h3>
                 <p className="status-note" style={{ marginTop: 8 }}>
-                  Your account is approved. Please complete your profile to access exams
-                  and analytics.
+                  Your account is approved. Please complete your profile to access exams and analytics.
                 </p>
-                <button style={{ marginTop: 12 }} onClick={() => setEditingProfile(true)}>
+                <button style={{ marginTop: 16 }} onClick={() => setEditingProfile(true)}>
                   Complete Profile
                 </button>
               </div>
             ) : (
               <>
                 {!studentProfileComplete && (
-                  <div className="dashboard-card">
-                    <h3>Profile incomplete</h3>
-                    <p className="status-note" style={{ marginTop: 8 }}>
-                      Your account is approved. You can continue using the dashboard,
-                      but completing your profile improves exam setup and tracking.
-                    </p>
-                    <button
-                      style={{ marginTop: 12 }}
-                      onClick={() => setEditingProfile(true)}
-                      disabled={!canEditStudentProfile}
-                    >
-                      Complete Profile
-                    </button>
+                  <div className="dashboard-card" style={{ borderColor: "var(--warning)", marginBottom: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: 15 }}>Profile incomplete</h3>
+                        <p className="status-note" style={{ margin: "4px 0 0" }}>
+                          Completing your profile improves exam setup and tracking.
+                        </p>
+                      </div>
+                      <button onClick={() => setEditingProfile(true)} disabled={!canEditStudentProfile}>
+                        Complete Profile
+                      </button>
+                    </div>
                     {!canEditStudentProfile && (
-                      <p className="status-note" style={{ marginTop: 8 }}>
-                        Profile editing is locked. Ask admin to allow profile editing.
-                      </p>
+                      <p className="status-note" style={{ marginTop: 8 }}>Profile editing is locked. Ask admin to allow profile editing.</p>
                     )}
                   </div>
                 )}
+
+                {/* Summary metrics */}
+                <div className="info-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", marginBottom: 20 }}>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Exams Taken</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>{totalAttempts || 0}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Total attempts</p>
+                  </div>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Average Score</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>{examHistory.length ? `${averageScore}%` : "-"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Across all exams</p>
+                  </div>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Pass Rate</p>
+                    <p style={{
+                      fontSize: 30, fontWeight: 700, margin: "4px 0",
+                      color: totalAttempts ? (passRate >= 75 ? "var(--success)" : "var(--danger)") : "var(--accent)",
+                    }}>{totalAttempts ? `${passRate}%` : "-"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Target: {profile?.required_passing_threshold || appSettings?.passing_threshold_default || 75}%</p>
+                  </div>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Current Badge</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: badge ? `var(--${badge.color})` : "var(--text-secondary)" }}>{badge ? badge.label : "—"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>{badge ? badge.note : "No badge yet"}</p>
+                  </div>
+                </div>
+
                 {(streakQualified || latestQualified) && (
-                  <div className="dashboard-card">
+                  <div className="dashboard-card" style={{ marginBottom: 20, borderColor: "var(--success)" }}>
                     <div className="card-header">
-                      <h3>Performance Milestone</h3>
+                      <h3 style={{ color: "var(--success)" }}>Performance Milestone</h3>
                       <span className="status-pill pass">Ready</span>
                     </div>
                     <p className="status-note" style={{ marginTop: 8 }}>
@@ -660,259 +684,30 @@ export default function Dashboard() {
                         : `Congratulations! You reached the target score of ${requiredThreshold}% in your latest mock exam.`}
                     </p>
                     <p className="status-note" style={{ marginTop: 6 }}>
-                      You are now marked as READY to take the{" "}
-                      {profile?.target_licensure || "licensure"} examination.
+                      You are now marked as READY to take the {profile?.target_licensure || "licensure"} examination.
                     </p>
                   </div>
                 )}
-                <div className="dashboard-grid">
-                  <section className="dashboard-card profile-card">
-                    <div className="card-header">
-                      <h3>Student Profile</h3>
-                      <span className="status-pill subtle">Verified</span>
-                    </div>
-                    <div className="profile-grid">
-                      <div className="profile-item">
-                        <span className="profile-label">Student ID</span>
-                        <span className="profile-value">{profile.student_id_number}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Full Name</span>
-                        <span className="profile-value">
-                          {[profile.first_name, profile.middle_name, profile.last_name]
-                            .filter(Boolean)
-                            .join(" ")}
-                        </span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Email</span>
-                        <span className="profile-value">{profile.email_address}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Username</span>
-                        <span className="profile-value">{profile.username}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Program / Degree</span>
-                        <span className="profile-value">{profile.program_degree}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Year Level</span>
-                        <span className="profile-value">{profile.year_level}</span>
-                      </div>
-                      {profile.section_class && (
-                        <div className="profile-item">
-                          <span className="profile-label">Section / Class</span>
-                          <span className="profile-value">{profile.section_class}</span>
-                        </div>
-                      )}
-                      <div className="profile-item">
-                        <span className="profile-label">Status</span>
-                        <span className="profile-value">{profile.status}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Target Licensure</span>
-                        <span className="profile-value">{profile.target_licensure}</span>
-                      </div>
-                      {profile.target_licensure === "LET" && (
-                        <div className="profile-item">
-                          <span className="profile-label">LET Track</span>
-                          <span className="profile-value">{profile.let_track}</span>
-                        </div>
-                      )}
-                      <div className="profile-item">
-                        <span className="profile-label">Specialization</span>
-                        <span className="profile-value">{profile.major_specialization}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Review Subjects</span>
-                        <span className="profile-value">
-                          {profile.assigned_review_subjects?.join(", ")}
-                        </span>
-                      </div>
-                      <div className="profile-item">
-                        <span className="profile-label">Passing Threshold</span>
-                        <span className="profile-value">
-                          {profile.required_passing_threshold}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="badge-card">
-                      <svg
-                        className={`badge-icon ${badge ? badge.color : "muted"}`}
-                        viewBox="0 0 32 32"
-                        aria-hidden="true"
-                      >
-                        <circle cx="16" cy="12" r="8" />
-                        <path d="M9 20l-1 9 8-5 8 5-1-9" />
-                      </svg>
-                      <div>
-                        <p className="badge-title">
-                          {badge ? `${badge.label} Badge` : "Badge Pending"}
-                        </p>
-                        <p className="badge-note">
-                          {badge ? badge.note : "Complete your first exam to earn a badge."}
-                        </p>
-                        <p className="badge-explain">
-                          AI interprets your latest score into a mastery band to guide
-                          your next study steps.
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setEditingProfile(true)}
-                      disabled={!canEditStudentProfile}
-                    >
-                      Edit Profile
-                    </button>
-                    {!canEditStudentProfile && (
-                      <p className="status-note" style={{ marginTop: 8 }}>
-                        Profile editing is locked. Ask admin to allow profile editing.
-                      </p>
-                    )}
-                  </section>
 
-                  <section className="dashboard-card progress-card">
-                    <div className="card-header">
-                      <h3>Improvement Trend</h3>
-                      <span className="trend-pill positive">
-                        {latestExam ? `${latestExam.percentage}%` : "No data"}
-                      </span>
-                    </div>
-                    <div className="trend-graph">
-                      {performanceTrend.length ? (
-                        <div className={`trend-sparkline ${performanceTrendDirection}`}>
-                          <svg
-                            viewBox="0 0 220 90"
-                            role="img"
-                            aria-label="Student performance trend"
-                            preserveAspectRatio="none"
-                          >
-                            <defs>
-                              <linearGradient id="studentTrendLine" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#0ea5e9" />
-                                <stop offset="100%" stopColor="#22c55e" />
-                              </linearGradient>
-                              <linearGradient id="studentTrendFill" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="rgba(14, 165, 233, 0.35)" />
-                                <stop offset="100%" stopColor="rgba(34, 197, 94, 0.05)" />
-                              </linearGradient>
-                            </defs>
-                            <path
-                              className="trend-area"
-                              d={`M 0 85 ${performanceTrend
-                                .map((entry, index) => {
-                                  const x = (index / (performanceTrend.length - 1 || 1)) * 220;
-                                  const y = 85 - (entry.percentage / 100) * 70;
-                                  return `L ${x} ${y}`;
-                                })
-                                .join(" ")} L 220 85 Z`}
-                              fill="url(#studentTrendFill)"
-                            />
-                            <polyline
-                              className="trend-line"
-                              fill="none"
-                              stroke="url(#studentTrendLine)"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              points={performanceTrend
-                                .map((entry, index) => {
-                                  const x = (index / (performanceTrend.length - 1 || 1)) * 220;
-                                  const y = 85 - (entry.percentage / 100) * 70;
-                                  return `${x},${y}`;
-                                })
-                                .join(" ")}
-                            />
-                            {performanceTrend.map((entry, index) => {
-                              const x = (index / (performanceTrend.length - 1 || 1)) * 220;
-                              const y = 85 - (entry.percentage / 100) * 70;
-                              return (
-                                <circle
-                                  key={`${entry.date}-${index}`}
-                                  cx={x}
-                                  cy={y}
-                                  r="3.5"
-                                  className="trend-dot"
-                                />
-                              );
-                            })}
-                          </svg>
-                          <div className="trend-footer">
-                            <span className="trend-label">
-                              {new Date(performanceTrend[0].date).toLocaleDateString()}
-                            </span>
-                            <span className="trend-note">
-                              {performanceTrendLabel}
-                              <strong>
-                                {performanceTrendDelta > 0 ? "+" : ""}
-                                {performanceTrendDelta}%
-                              </strong>
-                            </span>
-                            <span className="trend-label">
-                              {new Date(
-                                performanceTrend[performanceTrend.length - 1].date
-                              ).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="trend-empty">No exam data yet</div>
-                      )}
-                    </div>
-                    <div className="trend-metrics">
-                      <div className="metric">
-                        <span className="metric-label">Latest Exam</span>
-                        <span className="metric-value">
-                          {latestExam ? `${latestExam.percentage}%` : "-"}
-                        </span>
-                      </div>
-                      <div className="metric">
-                        <span className="metric-label">Average</span>
-                        <span className="metric-value">
-                          {examHistory.length ? `${averageScore}%` : "-"}
-                        </span>
-                      </div>
-                      <div className="metric">
-                        <span className="metric-label">Target</span>
-                        <span className="metric-value">
-                          {profile?.required_passing_threshold
-                            ? `${profile.required_passing_threshold}%`
-                            : typeof appSettings?.passing_threshold_default === "number"
-                              ? `${appSettings.passing_threshold_default}%`
-                              : "75%"}
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-
-                <div className="dashboard-grid">
+                {/* First row: Quick Actions + Results Snapshot */}
+                <div className="dashboard-grid" style={{ marginBottom: 20 }}>
                   <section className="dashboard-card actions-card">
                     <div className="card-header">
                       <h3>Quick Actions</h3>
                       <span className="status-note">Keep momentum</span>
                     </div>
                     <div className="action-grid">
-                      <button onClick={() => navigate("/exam-preview")}>
-                        Start Mock Board Exam
-                      </button>
-                      <button onClick={() => navigate("/review-missed")}>
-                        Review Missed Questions
-                      </button>
-                      <button onClick={() => navigate("/analytics")}>
-                        View Analytics
-                      </button>
-                      <button onClick={() => navigate("/certification-status")}>
-                        Certification Status
-                      </button>
+                      <button onClick={() => navigate("/exam-preview")}>Start Mock Board Exam</button>
+                      <button onClick={() => navigate("/review-missed")}>Review Missed Questions</button>
+                      <button onClick={() => navigate("/analytics")}>View Analytics</button>
+                      <button onClick={() => navigate("/certification-status")}>Certification Status</button>
                     </div>
                   </section>
 
                   <section className="dashboard-card results-card">
                     <div className="card-header">
                       <h3>Results Snapshot</h3>
-                      <span className="status-note">Last 7 days</span>
+                      <span className="status-note">Subject breakdown</span>
                     </div>
                     {subjectBreakdown.length ? (
                       <>
@@ -930,32 +725,8 @@ export default function Dashboard() {
                         <div className="highlight-card">
                           <p className="highlight-title">Focus Area</p>
                           <p className="highlight-text">
-                            Because your {weakestSubject?.label} accuracy (
-                            {weakestSubject?.value ?? 0}%) is below the {masteryThreshold}% mastery threshold,
-                            the system recommends focused remediation in this area.
+                            Your {weakestSubject?.label} accuracy ({weakestSubject?.value ?? 0}%) is below the {masteryThreshold}% threshold.
                           </p>
-                        </div>
-                        <div className="forecast-card">
-                          <div className="forecast-header">
-                            <span className="forecast-step">LT</span>
-                            <div>
-                              <p className="forecast-title">Long-Term Readiness Forecast</p>
-                              <p className="forecast-subtitle">
-                                Based on current policy trajectory
-                              </p>
-                            </div>
-                          </div>
-                          <div className="forecast-score">
-                            Predicted Readiness: {readinessLow}%–{readinessHigh}%
-                          </div>
-                          <ul className="forecast-bullets">
-                            <li>Recent performance: {latestScore}% (latest exam)</li>
-                            <li>Trend: {readinessPrediction?.trend || "stable"}</li>
-                            <li>Attempts analyzed: {readinessPrediction?.attempts || 0}</li>
-                            {readinessPrediction?.weak_subjects?.length ? (
-                              <li>Weak subjects: {readinessPrediction.weak_subjects.join(", ")}</li>
-                            ) : null}
-                          </ul>
                         </div>
                       </>
                     ) : (
@@ -964,7 +735,90 @@ export default function Dashboard() {
                   </section>
                 </div>
 
-                <div className="dashboard-grid">
+                {/* Second row: Improvement Trend + Readiness Forecast */}
+                <div className="dashboard-grid" style={{ marginBottom: 20 }}>
+                  <section className="dashboard-card progress-card">
+                    <div className="card-header">
+                      <h3>Improvement Trend</h3>
+                      <span className="trend-pill positive">
+                        {latestExam ? `${latestExam.percentage}%` : "No data"}
+                      </span>
+                    </div>
+                    <div className="trend-graph">
+                      {performanceTrend.length ? (
+                        <div className={`trend-sparkline ${performanceTrendDirection}`}>
+                          <svg viewBox="0 0 220 90" role="img" aria-label="Performance trend" preserveAspectRatio="none">
+                            <defs>
+                              <linearGradient id="studentTrendLine" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#0ea5e9" /><stop offset="100%" stopColor="#22c55e" />
+                              </linearGradient>
+                              <linearGradient id="studentTrendFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="rgba(14,165,233,0.35)" /><stop offset="100%" stopColor="rgba(34,197,94,0.05)" />
+                              </linearGradient>
+                            </defs>
+                            <path className="trend-area" d={`M 0 85 ${performanceTrend.map((e, i) => { const x = (i / (performanceTrend.length - 1 || 1)) * 220; const y = 85 - (e.percentage / 100) * 70; return `L ${x} ${y}`; }).join(" ")} L 220 85 Z`} fill="url(#studentTrendFill)" />
+                            <polyline className="trend-line" fill="none" stroke="url(#studentTrendLine)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={performanceTrend.map((e, i) => { const x = (i / (performanceTrend.length - 1 || 1)) * 220; const y = 85 - (e.percentage / 100) * 70; return `${x},${y}`; }).join(" ")} />
+                            {performanceTrend.map((e, i) => { const x = (i / (performanceTrend.length - 1 || 1)) * 220; const y = 85 - (e.percentage / 100) * 70; return <circle key={`${e.date}-${i}`} cx={x} cy={y} r="3.5" className="trend-dot" />; })}
+                          </svg>
+                          <div className="trend-footer">
+                            <span className="trend-label">{new Date(performanceTrend[0].date).toLocaleDateString()}</span>
+                            <span className="trend-note">{performanceTrendLabel}<strong>{performanceTrendDelta > 0 ? "+" : ""}{performanceTrendDelta}%</strong></span>
+                            <span className="trend-label">{new Date(performanceTrend[performanceTrend.length - 1].date).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ) : (<div className="trend-empty">No exam data yet</div>)}
+                    </div>
+                    <div className="trend-metrics">
+                      <div className="metric">
+                        <span className="metric-label">Latest Exam</span>
+                        <span className="metric-value">{latestExam ? `${latestExam.percentage}%` : "-"}</span>
+                      </div>
+                      <div className="metric">
+                        <span className="metric-label">Average</span>
+                        <span className="metric-value">{examHistory.length ? `${averageScore}%` : "-"}</span>
+                      </div>
+                      <div className="metric">
+                        <span className="metric-label">Target</span>
+                        <span className="metric-value">
+                          {profile?.required_passing_threshold || (typeof appSettings?.passing_threshold_default === "number" ? `${appSettings.passing_threshold_default}%` : "75%")}
+                        </span>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="dashboard-card" style={{ display: "flex", flexDirection: "column" }}>
+                    <div className="card-header">
+                      <h3>Readiness Forecast</h3>
+                      <span className="status-pill subtle">Long-term</span>
+                    </div>
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "8px 0" }}>
+                      {readinessLow != null && readinessHigh != null ? (
+                        <>
+                          <div style={{ textAlign: "center", marginBottom: 12 }}>
+                            <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: "var(--accent)" }}>
+                              {readinessLow}%–{readinessHigh}%
+                            </p>
+                            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "2px 0 0" }}>Predicted Readiness</p>
+                          </div>
+                          <div className="forecast-card" style={{ border: "none", padding: 0, background: "none" }}>
+                            <ul className="forecast-bullets" style={{ margin: 0, padding: 0 }}>
+                              <li>Trend: {readinessPrediction?.trend || "stable"}</li>
+                              <li>Attempts analyzed: {readinessPrediction?.attempts || 0}</li>
+                              {readinessPrediction?.weak_subjects?.length ? (
+                                <li>Weak subjects: {readinessPrediction.weak_subjects.join(", ")}</li>
+                              ) : null}
+                            </ul>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="history-empty" style={{ margin: 0 }}>Insufficient data</p>
+                      )}
+                    </div>
+                  </section>
+                </div>
+
+                {/* Third row: Exam History + combined section */}
+                <div className="dashboard-grid" style={{ marginBottom: 20 }}>
                   <section className="dashboard-card history-card">
                     <div className="card-header">
                       <h3>Exam History</h3>
@@ -975,93 +829,119 @@ export default function Dashboard() {
                         {examHistory.map((entry, index) => (
                           <div key={`${entry.date}-${index}`} className="history-row">
                             <div>
-                               <p className="history-title">
-                                 {entry.result} •{" "}
-                                 {entry.total > 1 ? `${entry.percentage}%` : `${entry.score}/${entry.total}`}
-                               </p>
-                              <p className="history-subtitle">
-                                {new Date(entry.date).toLocaleString()}
+                              <p className="history-title">
+                                {entry.result} • {entry.total > 1 ? `${entry.percentage}%` : `${entry.score}/${entry.total}`}
                               </p>
+                              <p className="history-subtitle">{new Date(entry.date).toLocaleString()}</p>
                             </div>
-                            <span className="history-score">
-                              {entry.score}/{entry.total}
-                            </span>
+                            <span className="history-score">{entry.score}/{entry.total}</span>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="history-empty">No exam history yet.</p>
-                    )}
-                  </section>
-                </div>
-
-                <div className="dashboard-grid">
-                  <section className="dashboard-card analytics-card">
-                    <div className="card-header">
-                      <h3>Analytics</h3>
-                      <span className="status-note">Based on exam history</span>
-                    </div>
-                    <div className="analytics-grid">
-                      <div className="metric">
-                        <span className="metric-label">Attempts</span>
-                        <span className="metric-value">{totalAttempts || "-"}</span>
-                      </div>
-                      <div className="metric">
-                        <span className="metric-label">Pass Rate</span>
-                        <span className="metric-value">
-                          {totalAttempts ? `${passRate}%` : "-"}
-                        </span>
-                      </div>
-                      <div className="metric">
-                        <span className="metric-label">Latest Result</span>
-                        <span className="metric-value">{latestResultText}</span>
-                      </div>
-                    </div>
-                    <div className="analytics-split">
-                      <div>
-                        <p className="analytics-label">Best Subject</p>
-                        <p className="analytics-value">
-                          {bestSubject ? `${bestSubject.label} · ${bestSubject.value}%` : "-"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="analytics-label">Focus Subject</p>
-                        <p className="analytics-value">
-                          {weakestSubject ? `${weakestSubject.label} · ${weakestSubject.value}%` : "-"}
-                        </p>
-                      </div>
-                    </div>
+                    ) : (<p className="history-empty">No exam history yet.</p>)}
                   </section>
 
-                  <section className="dashboard-card recommendations-card">
+                  <section className="dashboard-card" style={{ display: "flex", flexDirection: "column" }}>
                     <div className="card-header">
                       <h3>Recommendations</h3>
-                      <span className="status-note">Next best actions</span>
+                      <span className="status-note">AI-powered insights</span>
                     </div>
-                    <ul className="recommendation-list">
+                    <ul className="recommendation-list" style={{ flex: 1 }}>
                       {rlRecommendation && (
-                        <li>
-                          <strong>{rlRecommendation.action_label}:</strong> {rlRecommendation.reason}
-                          {!!rlRecommendation.focus_subjects?.length && (
-                            <> Focus: {rlRecommendation.focus_subjects.join(", ")}.</>
-                          )}
-                        </li>
+                        <li><strong>{rlRecommendation.action_label}:</strong> {rlRecommendation.reason}{!!rlRecommendation.focus_subjects?.length && <> Focus: {rlRecommendation.focus_subjects.join(", ")}.</>}</li>
                       )}
-                      {!latestExam && (
-                        <li>Take your first mock exam to unlock analytics.</li>
-                      )}
-                      {latestExam && latestExam.result === "FAIL" && weakestSubject && (
-                        <li>Focus on {weakestSubject.label} with targeted drills.</li>
-                      )}
-                      {latestExam && latestExam.result === "PASS" && (
-                        <li>Maintain momentum with a full-length mock exam.</li>
-                      )}
-                      {latestExam && (
-                        <li>Review missed questions from the last attempt.</li>
-                      )}
+                      {!latestExam && <li>Take your first mock exam to unlock analytics.</li>}
+                      {latestExam && latestExam.result === "FAIL" && weakestSubject && <li>Focus on {weakestSubject.label} with targeted drills.</li>}
+                      {latestExam && latestExam.result === "PASS" && <li>Maintain momentum with a full-length mock exam.</li>}
+                      {latestExam && <li>Review missed questions from the last attempt.</li>}
                     </ul>
+                    {examHistory.length ? (
+                      <div className="analytics-split" style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: "auto" }}>
+                        <div>
+                          <p className="analytics-label">Best Subject</p>
+                          <p className="analytics-value">{bestSubject ? `${bestSubject.label} · ${bestSubject.value}%` : "-"}</p>
+                        </div>
+                        <div>
+                          <p className="analytics-label">Focus Subject</p>
+                          <p className="analytics-value">{weakestSubject ? `${weakestSubject.label} · ${weakestSubject.value}%` : "-"}</p>
+                        </div>
+                      </div>
+                    ) : null}
                   </section>
                 </div>
+
+                {/* Profile + Badge row (collapsible) */}
+                <details className="dashboard-card" style={{ padding: 0, cursor: "pointer" }}>
+                  <summary style={{ padding: "14px 16px", fontWeight: 600, fontSize: 15, userSelect: "none" }}>
+                    Student Profile & Badge
+                  </summary>
+                  <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--border)" }}>
+                    <div className="profile-grid" style={{ paddingTop: 16 }}>
+                      <div className="profile-item">
+                        <span className="profile-label">Student ID</span>
+                        <span className="profile-value">{profile.student_id_number}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Full Name</span>
+                        <span className="profile-value">{[profile.first_name, profile.middle_name, profile.last_name].filter(Boolean).join(" ")}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Email</span>
+                        <span className="profile-value">{profile.email_address}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Program / Degree</span>
+                        <span className="profile-value">{profile.program_degree}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Year Level</span>
+                        <span className="profile-value">{profile.year_level}</span>
+                      </div>
+                      {profile.section_class && (
+                        <div className="profile-item">
+                          <span className="profile-label">Section / Class</span>
+                          <span className="profile-value">{profile.section_class}</span>
+                        </div>
+                      )}
+                      <div className="profile-item">
+                        <span className="profile-label">Target Licensure</span>
+                        <span className="profile-value">{profile.target_licensure}</span>
+                      </div>
+                      {profile.target_licensure === "LET" && (
+                        <div className="profile-item">
+                          <span className="profile-label">LET Track</span>
+                          <span className="profile-value">{profile.let_track}</span>
+                        </div>
+                      )}
+                      <div className="profile-item">
+                        <span className="profile-label">Specialization</span>
+                        <span className="profile-value">{profile.major_specialization}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Review Subjects</span>
+                        <span className="profile-value">{profile.assigned_review_subjects?.join(", ")}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Passing Threshold</span>
+                        <span className="profile-value">{profile.required_passing_threshold}%</span>
+                      </div>
+                    </div>
+                    <div className="badge-card" style={{ marginTop: 16 }}>
+                      <svg className={`badge-icon ${badge ? badge.color : "muted"}`} viewBox="0 0 32 32" aria-hidden="true">
+                        <circle cx="16" cy="12" r="8" /><path d="M9 20l-1 9 8-5 8 5-1-9" />
+                      </svg>
+                      <div>
+                        <p className="badge-title">{badge ? `${badge.label} Badge` : "Badge Pending"}</p>
+                        <p className="badge-note">{badge ? badge.note : "Complete your first exam to earn a badge."}</p>
+                        <p className="badge-explain">AI interprets your latest score into a mastery band to guide your next study steps.</p>
+                      </div>
+                    </div>
+                    <button style={{ marginTop: 12 }} onClick={() => setEditingProfile(true)} disabled={!canEditStudentProfile}>
+                      Edit Profile
+                    </button>
+                    {!canEditStudentProfile && (<p className="status-note" style={{ marginTop: 8 }}>Profile editing is locked. Ask admin to allow profile editing.</p>)}
+                  </div>
+                </details>
               </>
             )}
           </>
@@ -1071,7 +951,7 @@ export default function Dashboard() {
         {user.role === "instructor" && (
           <>
             {loadingInstructorProfile ? (
-              <div className="dashboard-card">Loading profile...</div>
+              <div className="dashboard-card" style={{ textAlign: "center", padding: 32 }}>Loading profile...</div>
             ) : accessDecision && accessDecision !== "approved" && !editingInstructorProfile ? (
               renderAccessGate()
             ) : editingInstructorProfile ? (
@@ -1084,250 +964,193 @@ export default function Dashboard() {
             ) : (
               <>
                 {!instructorProfileComplete && (
-                  <div className="dashboard-card">
-                    <h3>Profile incomplete</h3>
-                    <p className="status-note" style={{ marginTop: 8 }}>
-                      You can continue using the dashboard, but completing your profile
-                      helps the admin verify your access.
-                    </p>
-                    <button
-                      style={{ marginTop: 12 }}
-                      onClick={() => setEditingInstructorProfile(true)}
-                    >
-                      Complete Profile
-                    </button>
+                  <div className="dashboard-card" style={{ borderColor: "var(--warning)", marginBottom: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: 15 }}>Profile incomplete</h3>
+                        <p className="status-note" style={{ margin: "4px 0 0" }}>
+                          Completing your profile helps the admin verify your access.
+                        </p>
+                      </div>
+                      <button onClick={() => setEditingInstructorProfile(true)}>
+                        Complete Profile
+                      </button>
+                    </div>
                   </div>
                 )}
-              <div className="dashboard-grid">
-                <section className="dashboard-card actions-card">
-                  <div className="card-header">
-                    <h3>Instructor Actions</h3>
-                    <button
-                      type="button"
-                      className="status-pill subtle"
-                      style={{ border: "none", cursor: "pointer" }}
-                      onClick={() => setEditingInstructorProfile(true)}
-                    >
-                      Edit Profile
-                    </button>
+
+                {/* Summary metrics */}
+                <div className="info-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", marginBottom: 20 }}>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Active Examinees</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>{instructorActiveExaminees}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Unique students</p>
                   </div>
-                  <div className="profile-grid">
-                  <div className="profile-item">
-                    <span className="profile-label">Name</span>
-                    <span className="profile-value">{instructorProfileSafe.name}</span>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Average Score</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>{instructorAvgScore != null ? `${instructorAvgScore}%` : "-"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Across all attempts</p>
                   </div>
-                  <div className="profile-item">
-                    <span className="profile-label">Employee ID</span>
-                    <span className="profile-value">{instructorProfileSafe.employee_id}</span>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Completion Rate</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: instructorCompletion != null ? "var(--success)" : "var(--accent)" }}>{instructorCompletion != null ? `${instructorCompletion}%` : "-"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Score / Total items</p>
                   </div>
-                  <div className="profile-item">
-                    <span className="profile-label">Department</span>
-                    <span className="profile-value">{instructorProfileSafe.department}</span>
-                  </div>
-                  <div className="profile-item">
-                    <span className="profile-label">Position</span>
-                    <span className="profile-value">{instructorProfileSafe.position}</span>
-                  </div>
-                  <div className="profile-item">
-                    <span className="profile-label">Program</span>
-                    <span className="profile-value">{instructorProfileSafe.program}</span>
+                  <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Program</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>{instructorProgram || "—"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Assigned track</p>
                   </div>
                 </div>
-                  <div className="action-grid">
-                    <button onClick={() => navigate("/instructor/exam-settings")}>
-                      {instructorProgram} Exam Setup
-                    </button>
-                    <button 
-                      onClick={() => navigate(`/questions?track=${instructorProgram}`)}
-                    >
-                      {instructorProgram} Question Bank
-                    </button>
-                    <button onClick={() => navigate("/instructor-performance")}>
-                      View Student Performance
-                    </button>
 
-                  </div>
-                </section>
-                <section className="dashboard-card progress-card">
-                  <div className="card-header">
-                    <h3>Class Momentum</h3>
-                    <span className="trend-pill positive">
-                      {classTrend.length
-                        ? `${classTrend[classTrend.length - 1].percentage}%`
-                        : "No data"}
-                    </span>
-                  </div>
-                  <div className="trend-graph">
-                    {classTrend.length ? (
-                      <div className={`trend-sparkline ${classTrendDirection}`}>
-                        <svg
-                          viewBox="0 0 220 90"
-                          role="img"
-                          aria-label="Class performance trend"
-                          preserveAspectRatio="none"
-                        >
-                          <defs>
-                            <linearGradient id="trendLine" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#0ea5e9" />
-                              <stop offset="100%" stopColor="#22c55e" />
-                            </linearGradient>
-                            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="rgba(14, 165, 233, 0.35)" />
-                              <stop offset="100%" stopColor="rgba(34, 197, 94, 0.05)" />
-                            </linearGradient>
-                          </defs>
-                          <path
-                            className="trend-area"
-                            d={`M 0 85 ${classTrend
-                              .map((entry, index) => {
-                                const x = (index / (classTrend.length - 1 || 1)) * 220;
-                                const y = 85 - (entry.percentage / 100) * 70;
-                                return `L ${x} ${y}`;
-                              })
-                              .join(" ")} L 220 85 Z`}
-                            fill="url(#trendFill)"
-                          />
-                          <polyline
-                            className="trend-line"
-                            fill="none"
-                            stroke="url(#trendLine)"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            points={classTrend
-                              .map((entry, index) => {
-                                const x = (index / (classTrend.length - 1 || 1)) * 220;
-                                const y = 85 - (entry.percentage / 100) * 70;
-                                return `${x},${y}`;
-                              })
-                              .join(" ")}
-                          />
-                          {classTrend.map((entry, index) => {
-                            const x = (index / (classTrend.length - 1 || 1)) * 220;
-                            const y = 85 - (entry.percentage / 100) * 70;
-                            return (
-                              <circle
-                                key={`${entry.date}-${index}`}
-                                cx={x}
-                                cy={y}
-                                r="3.5"
-                                className="trend-dot"
-                              />
-                            );
-                          })}
-                        </svg>
-                        <div className="trend-footer">
-                          <span className="trend-label">
-                            {classTrend[0].date.toLocaleDateString()}
-                          </span>
-                          <span className="trend-note">
-                            {classTrendLabel}
-                            <strong>
-                              {classTrendDelta > 0 ? "+" : ""}
-                              {classTrendDelta}%
-                            </strong>
-                          </span>
-                          <span className="trend-label">
-                            {classTrend[classTrend.length - 1].date.toLocaleDateString()}
-                          </span>
+                {/* First row: Actions + Class Momentum */}
+                <div className="dashboard-grid" style={{ marginBottom: 20 }}>
+                  <section className="dashboard-card actions-card">
+                    <div className="card-header">
+                      <h3>Instructor Actions</h3>
+                      <span className="status-pill subtle" style={{ cursor: "pointer" }} onClick={() => setEditingInstructorProfile(true)}>Edit Profile</span>
+                    </div>
+                    <div className="action-grid">
+                      <button onClick={() => navigate("/instructor/exam-settings")}>
+                        {instructorProgram} Exam Setup
+                      </button>
+                      <button onClick={() => navigate(`/questions?track=${instructorProgram}`)}>
+                        {instructorProgram} Question Bank
+                      </button>
+                      <button onClick={() => navigate("/instructor-performance")}>
+                        View Student Performance
+                      </button>
+                    </div>
+                  </section>
+
+                  <section className="dashboard-card progress-card">
+                    <div className="card-header">
+                      <h3>Class Momentum</h3>
+                      <span className="trend-pill positive">
+                        {classTrend.length ? `${classTrend[classTrend.length - 1].percentage}%` : "No data"}
+                      </span>
+                    </div>
+                    <div className="trend-graph">
+                      {classTrend.length ? (
+                        <div className={`trend-sparkline ${classTrendDirection}`}>
+                          <svg viewBox="0 0 220 90" role="img" aria-label="Class performance trend" preserveAspectRatio="none">
+                            <defs>
+                              <linearGradient id="trendLine" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#0ea5e9" /><stop offset="100%" stopColor="#22c55e" />
+                              </linearGradient>
+                              <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="rgba(14,165,233,0.35)" /><stop offset="100%" stopColor="rgba(34,197,94,0.05)" />
+                              </linearGradient>
+                            </defs>
+                            <path className="trend-area" d={`M 0 85 ${classTrend.map((e, i) => { const x = (i / (classTrend.length - 1 || 1)) * 220; const y = 85 - (e.percentage / 100) * 70; return `L ${x} ${y}`; }).join(" ")} L 220 85 Z`} fill="url(#trendFill)" />
+                            <polyline className="trend-line" fill="none" stroke="url(#trendLine)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={classTrend.map((e, i) => { const x = (i / (classTrend.length - 1 || 1)) * 220; const y = 85 - (e.percentage / 100) * 70; return `${x},${y}`; }).join(" ")} />
+                            {classTrend.map((e, i) => { const x = (i / (classTrend.length - 1 || 1)) * 220; const y = 85 - (e.percentage / 100) * 70; return <circle key={`${e.date}-${i}`} cx={x} cy={y} r="3.5" className="trend-dot" />; })}
+                          </svg>
+                          <div className="trend-footer">
+                            <span className="trend-label">{classTrend[0].date.toLocaleDateString()}</span>
+                            <span className="trend-note">{classTrendLabel}<strong>{classTrendDelta > 0 ? "+" : ""}{classTrendDelta}%</strong></span>
+                            <span className="trend-label">{classTrend[classTrend.length - 1].date.toLocaleDateString()}</span>
+                          </div>
                         </div>
+                      ) : (<div className="trend-empty">No class data yet</div>)}
+                    </div>
+                    <div className="trend-metrics">
+                      <div className="metric">
+                        <span className="metric-label">Avg Score</span>
+                        <span className="metric-value">{instructorAvgScore != null ? `${instructorAvgScore}%` : "-"}</span>
+                      </div>
+                      <div className="metric">
+                        <span className="metric-label">Completion</span>
+                        <span className="metric-value">{instructorCompletion != null ? `${instructorCompletion}%` : "-"}</span>
+                      </div>
+                      <div className="metric">
+                        <span className="metric-label">Active Examinees</span>
+                        <span className="metric-value">{instructorActiveExaminees}</span>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                {/* Second row: Enrollment + Recent Attempts */}
+                <div className="dashboard-grid" style={{ marginBottom: 20 }}>
+                  <section className="dashboard-card results-card">
+                    <div className="card-header">
+                      <h3>{instructorProgram === "LET" ? "LET Enrollment by Major" : `${instructorProgram || "Program"} Enrollment`}</h3>
+                      <span className="status-note">Registered students</span>
+                    </div>
+                    {instructorEnrollmentRows.length ? (
+                      <div className="results-list">
+                        {instructorEnrollmentRows.map((entry) => (
+                          <div key={entry.major} className="result-row">
+                            <span className="result-label">{entry.major}</span>
+                            <div className="result-bar">
+                              <span style={{ width: `${Math.min(100, entry.count * 10)}%` }} />
+                            </div>
+                            <span className="result-score">{entry.count}</span>
+                          </div>
+                        ))}
                       </div>
                     ) : (
-                      <div className="trend-empty">No class data yet</div>
+                      <p className="history-empty">
+                        {instructorProgram === "LET" ? "No LET student data yet." : `No ${instructorProgram || "program"} enrollment breakdown available.`}
+                      </p>
                     )}
-                  </div>
-                  <div className="trend-metrics">
-                    <div className="metric">
-                      <span className="metric-label">Avg Score</span>
-                      <span className="metric-value">
-                        {instructorAvgScore != null ? `${instructorAvgScore}%` : "-"}
-                      </span>
+                  </section>
+                  <section className="dashboard-card history-card">
+                    <div className="card-header">
+                      <h3>Recent Exam Attempts</h3>
+                      <span className="status-note">Date & time</span>
                     </div>
-                    <div className="metric">
-                      <span className="metric-label">Completion</span>
-                      <span className="metric-value">
-                        {instructorCompletion != null ? `${instructorCompletion}%` : "-"}
-                      </span>
-                    </div>
-                    <div className="metric">
-                      <span className="metric-label">Active Examinees</span>
-                      <span className="metric-value">
-                        {instructorActiveExaminees}
-                      </span>
-                    </div>
-                  </div>
-                </section>
-              </div>
-              <div className="dashboard-grid">
-                <section className="dashboard-card results-card">
-                  <div className="card-header">
-                    <h3>
-                      {instructorProgram === "LET"
-                        ? "LET Enrollment by Major"
-                        : `${instructorProgram || "Program"} Enrollment`}
-                    </h3>
-                    <span className="status-note">Registered students</span>
-                  </div>
-                  {instructorEnrollmentRows.length ? (
-                    <div className="results-list">
-                      {instructorEnrollmentRows.map((entry) => (
-                        <div key={entry.major} className="result-row">
-                          <span className="result-label">{entry.major}</span>
-                          <div className="result-bar">
-                            <span
-                              style={{
-                                width: `${Math.min(100, entry.count * 10)}%`,
-                              }}
-                            />
+                    {instructorRecentAttempts.length ? (
+                      <div className="history-list">
+                        {instructorRecentAttempts.map((attempt, index) => (
+                          <div key={`${attempt.email}-${attempt.created_at}-${index}`} className="history-row">
+                            <div>
+                              <p className="history-title">{attempt.email} • {attempt.exam_type}</p>
+                              <p className="history-subtitle">
+                                {attempt.major} • {attempt.created_at ? new Date(attempt.created_at).toLocaleString() : "Unknown time"}
+                              </p>
+                            </div>
+                            <span className="history-score">
+                              {attempt.total > 1 ? `${attempt.percentage ?? "-"}% (${attempt.score ?? "-"}/${attempt.total ?? "-"})` : `${attempt.score ?? "-"}/${attempt.total ?? "-"}`}
+                            </span>
                           </div>
-                          <span className="result-score">{entry.count}</span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    ) : (<p className="history-empty">No exam attempts yet.</p>)}
+                  </section>
+                </div>
+
+                {/* Profile (collapsible) */}
+                <details className="dashboard-card" style={{ padding: 0, cursor: "pointer" }}>
+                  <summary style={{ padding: "14px 16px", fontWeight: 600, fontSize: 15, userSelect: "none" }}>
+                    Instructor Profile
+                  </summary>
+                  <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--border)" }}>
+                    <div className="profile-grid" style={{ paddingTop: 16 }}>
+                      <div className="profile-item">
+                        <span className="profile-label">Name</span>
+                        <span className="profile-value">{instructorProfileSafe.name}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Employee ID</span>
+                        <span className="profile-value">{instructorProfileSafe.employee_id}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Department</span>
+                        <span className="profile-value">{instructorProfileSafe.department}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Position</span>
+                        <span className="profile-value">{instructorProfileSafe.position}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Program</span>
+                        <span className="profile-value">{instructorProfileSafe.program}</span>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="history-empty">
-                      {instructorProgram === "LET"
-                        ? "No LET student data yet."
-                        : `No ${instructorProgram || "program"} enrollment breakdown available.`}
-                    </p>
-                  )}
-                </section>
-                <section className="dashboard-card history-card">
-                  <div className="card-header">
-                    <h3>Recent Exam Attempts</h3>
-                    <span className="status-note">Date & time</span>
                   </div>
-                  {instructorRecentAttempts.length ? (
-                    <div className="history-list">
-                      {instructorRecentAttempts.map((attempt, index) => (
-                        <div
-                          key={`${attempt.email}-${attempt.created_at}-${index}`}
-                          className="history-row"
-                        >
-                          <div>
-                            <p className="history-title">
-                              {attempt.email} • {attempt.exam_type}
-                            </p>
-                            <p className="history-subtitle">
-                              {attempt.major} •{" "}
-                              {attempt.created_at
-                                ? new Date(attempt.created_at).toLocaleString()
-                                : "Unknown time"}
-                            </p>
-                          </div>
-                          <span className="history-score">
-                            {attempt.total > 1
-                              ? `${attempt.percentage ?? "-"}% (${attempt.score ?? "-"}/${attempt.total ?? "-"})`
-                              : `${attempt.score ?? "-"}/${attempt.total ?? "-"}`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="history-empty">No exam attempts yet.</p>
-                  )}
-                </section>
-              </div>
+                </details>
               </>
             )}
           </>
