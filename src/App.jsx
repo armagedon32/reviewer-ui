@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AppLayout from "./components/AppLayout";
 import "./styles.css";
 import Exam from "./pages/Exam";
 import QuestionBank from "./pages/QuestionBank";
@@ -43,172 +44,172 @@ export default function App() {
           }
         />
 
-        {/* PROTECTED ROUTE */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "instructor", "student"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        {/* PROTECTED ROUTES (with global sidebar layout) */}
+        <Route element={<AppLayout />}>
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "instructor", "student"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/approval-pending"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <ApprovalPending />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/approval-pending"
+            element={
+              <ProtectedRoute allowedRoles={["student", "instructor"]}>
+                <ApprovalPending />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/questions"
-          element={
-            <ProtectedRoute allowedRoles={["instructor"]}>
-              <QuestionBank />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/question-bank"
-          element={
-            <ProtectedRoute allowedRoles={["instructor", "admin"]}>
-              <QuestionBank />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/questions"
+            element={
+              <ProtectedRoute allowedRoles={["instructor"]}>
+                <QuestionBank />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/question-bank"
+            element={
+              <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                <QuestionBank />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/instructor-performance"
-          element={
-            <ProtectedRoute allowedRoles={["instructor"]}>
-              <InstructorPerformance />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/instructor/class-analytics"
-          element={
-            <ProtectedRoute allowedRoles={["instructor", "admin"]}>
-              <ClassAnalytics />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/instructor-performance"
+            element={
+              <ProtectedRoute allowedRoles={["instructor"]}>
+                <InstructorPerformance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/instructor/class-analytics"
+            element={
+              <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                <ClassAnalytics />
+              </ProtectedRoute>
+            }
+          />
 
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/system-settings"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminSystemSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/exam-settings"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminExamSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/certification-management"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminCertificationManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminUserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/audit-logs"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminAuditLogs />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminPanel />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/system-settings"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminSystemSettings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/exam-settings"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminExamSettings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/certification-management"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminCertificationManagement />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminUserManagement />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/audit-logs"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminAuditLogs />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* EXAM ROUTE (STUDENT ONLY) */}
-        <Route
-          path="/exam"
-          element={
-            <ProtectedRoute allowedRoles={["student"]}>
-              <Exam />
-            </ProtectedRoute>
-          }
-        />
+          {/* EXAM ROUTE (STUDENT ONLY) */}
+          <Route
+            path="/exam"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <Exam />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/exam-preview"
-          element={
-            <ProtectedRoute allowedRoles={["student", "instructor"]}>
-              <ExamPreview />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/exam-preview"
+            element={
+              <ProtectedRoute allowedRoles={["student", "instructor"]}>
+                <ExamPreview />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/instructor-exam-preview"
-          element={
-            <ProtectedRoute allowedRoles={["instructor", "admin"]}>
-              <InstructorExamPreview />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/instructor/exam-settings"
-          element={
-            <ProtectedRoute allowedRoles={["instructor"]}>
-              <InstructorExamSettings />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/instructor-exam-preview"
+            element={
+              <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                <InstructorExamPreview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/instructor/exam-settings"
+            element={
+              <ProtectedRoute allowedRoles={["instructor"]}>
+                <InstructorExamSettings />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/review-missed"
-          element={
-            <ProtectedRoute allowedRoles={["student"]}>
-              <ReviewMissed />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/review-missed"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <ReviewMissed />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute allowedRoles={["student"]}>
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/certification-status"
-          element={
-            <ProtectedRoute allowedRoles={["student"]}>
-              <CertificationStatus />
-            </ProtectedRoute>
-          }
-        />
-
+          <Route
+            path="/certification-status"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <CertificationStatus />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
 
         {/* FALLBACK (optional but recommended) */}
         <Route path="*" element={<Login />} />

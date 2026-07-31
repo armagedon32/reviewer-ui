@@ -11,6 +11,7 @@ import {
 import { getUser } from "../auth";
 import Button from "../components/Button";
 import InlineNotice from "../components/InlineNotice";
+import { getSystemLogo } from "../systemLogo";
 
 const defaultForm = {
   exam_type: "LET",
@@ -26,6 +27,7 @@ const defaultForm = {
 };
 
 export default function QuestionBank() {
+  const logoSrc = getSystemLogo();
   const user = getUser();
   const isInstructor = user?.role === "instructor";
   const instructorStorageKey = user?.email
@@ -290,37 +292,35 @@ export default function QuestionBank() {
     });
 
   return (
-    <div className="container">
-      <div className="card question-card">
-        <div className="question-header">
-          <div>
-            <h2>Question Bank</h2>
-            <p style={{ marginTop: -6 }}>
-              Manage LET and CPA exam items separately.
-            </p>
+    <div className="dashboard-page">
+      <div className="dashboard-shell">
+        <div className="review-header">
+          <div className="review-brand">
+            <img src={logoSrc} alt="System logo" className="review-logo" />
+            <div className="admin-title-block">
+              <p className="dashboard-kicker">
+                {user?.role === "admin" ? "Admin" : "Instructor"}
+              </p>
+              <h2 className="dashboard-title">Question Bank</h2>
+              <p className="dashboard-email">
+                Manage LET and CPA exam items separately.
+              </p>
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {isInstructor && (
+              <button
+                type="button"
+                onClick={() => navigate("/instructor-exam-preview")}
+                style={{ width: "auto", margin: 0 }}
+              >
+                Preview Exam Sheet
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => navigate("/instructor-exam-preview")}
-              style={{
-                width: "auto",
-                background: "#1e293b",
-                padding: "10px 14px",
-                borderRadius: "999px",
-              }}
-            >
-              Preview Exam Sheet
-            </button>
-            <button
-              type="button"
+              className="review-back"
               onClick={() => navigate("/dashboard")}
-              style={{
-                width: "auto",
-                background: "#0f172a",
-                padding: "10px 14px",
-                borderRadius: "999px",
-              }}
             >
               Back to Dashboard
             </button>
