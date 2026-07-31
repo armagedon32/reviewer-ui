@@ -842,15 +842,69 @@ export default function Dashboard() {
                       <h3>Recommendations</h3>
                       <span className="status-note">AI-powered insights</span>
                     </div>
-                    <ul className="recommendation-list" style={{ flex: 1 }}>
-                      {rlRecommendation && (
-                        <li><strong>{rlRecommendation.action_label}:</strong> {rlRecommendation.reason}{!!rlRecommendation.focus_subjects?.length && <> Focus: {rlRecommendation.focus_subjects.join(", ")}.</>}</li>
-                      )}
-                      {!latestExam && <li>Take your first mock exam to unlock analytics.</li>}
-                      {latestExam && latestExam.result === "FAIL" && weakestSubject && <li>Focus on {weakestSubject.label} with targeted drills.</li>}
-                      {latestExam && latestExam.result === "PASS" && <li>Maintain momentum with a full-length mock exam.</li>}
-                      {latestExam && <li>Review missed questions from the last attempt.</li>}
-                    </ul>
+
+                    {rlRecommendation ? (
+                      <>
+                        <div className="highlight-card">
+                          <p className="highlight-title">Suggested Activity</p>
+                          <p className="highlight-text">
+                            <strong>{rlRecommendation.action_label}:</strong> {rlRecommendation.reason}
+                            {!!rlRecommendation.focus_subjects?.length && <> Focus: {rlRecommendation.focus_subjects.join(", ")}.</>}
+                          </p>
+                        </div>
+
+                        <div className="highlight-card">
+                          <p className="highlight-title">Recommended Difficulty</p>
+                          <p className="highlight-text">
+                            <strong>{rlRecommendation.difficulty?.label || "-"}:</strong> {rlRecommendation.difficulty?.note || "Based on your current mastery level."}
+                          </p>
+                        </div>
+
+                        {rlRecommendation.materials?.length ? (
+                          <div className="highlight-card">
+                            <p className="highlight-title">Recommended Review Materials</p>
+                            {rlRecommendation.materials.map((m) => (
+                              <div key={m.subject} style={{ marginBottom: 8 }}>
+                                <p style={{ fontWeight: 700, fontSize: 13, margin: "0 0 4px", color: "var(--accent)" }}>
+                                  {m.subject}
+                                </p>
+                                <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 3, fontSize: 13 }}>
+                                  {m.items.map((item, i) => (
+                                    <li key={i} style={{ wordBreak: "break-word" }}>{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {rlRecommendation.schedule?.length ? (
+                          <details style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+                            <summary style={{ fontWeight: 600, fontSize: 14, cursor: "pointer", userSelect: "none" }}>
+                              Weekly Review Schedule (7 days)
+                            </summary>
+                            <div className="history-list" style={{ marginTop: 10 }}>
+                              {rlRecommendation.schedule.map((entry, i) => (
+                                <div key={i} className="history-row">
+                                  <div>
+                                    <p className="history-title">{entry.day} • {entry.duration}</p>
+                                    <p className="history-subtitle">{entry.activity}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        ) : null}
+                      </>
+                    ) : (
+                      <ul className="recommendation-list" style={{ flex: 1 }}>
+                        {!latestExam && <li>Take your first mock exam to unlock personalized recommendations.</li>}
+                        {latestExam && latestExam.result === "FAIL" && weakestSubject && <li>Focus on {weakestSubject.label} with targeted drills.</li>}
+                        {latestExam && latestExam.result === "PASS" && <li>Maintain momentum with a full-length mock exam.</li>}
+                        {latestExam && <li>Review missed questions from the last attempt.</li>}
+                      </ul>
+                    )}
+
                     {examHistory.length ? (
                       <div className="analytics-split" style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: "auto" }}>
                         <div>
