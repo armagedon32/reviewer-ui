@@ -19,6 +19,7 @@ Version 1.0 · Applies to all users (Student, Instructor, Administrator)
 10. [Badges & Readiness Meaning](#10-badges--readiness-meaning)
 11. [Troubleshooting](#11-troubleshooting)
 12. [Frequently Asked Questions](#12-frequently-asked-questions)
+13. [Appendix A: Screenshot Checklist](#appendix-a-screenshot-checklist)
 
 ---
 
@@ -60,6 +61,8 @@ It is used by three types of users:
 
 ## 3. Logging In
 
+![Login screen](docs/images/user-manual/01-login.png)
+
 1. On the **Login** page, enter your **Email**.
 2. Enter your **Password**.
 3. Click the **Login** button.
@@ -77,7 +80,7 @@ It is used by three types of users:
 
 When a student logs in for the first time, the **"Student Profile & Exam Setup"** form appears on the Dashboard. You must complete it before you can take exams.
 
-> Tip: A "screenshot here" note — replace this with a screenshot of the profile setup form when producing the final document.
+![Student Profile & Exam Setup](docs/images/user-manual/03-student-profile-setup.png)
 
 ### 4.1 Fields to fill in
 
@@ -123,7 +126,7 @@ While your account is waiting for approval, you will see the **"Approval Pending
   - **Access denied** — your request was denied or your account is inactive. Click **Resend approval request** or contact the admin.
   - **Approval request expired** — the request expired after **7 days**. Click **Resend approval request** to notify the admin again.
 
-> A "screenshot here" note — replace this with a screenshot of the Approval Pending screen.
+![Approval Pending screen](docs/images/user-manual/04-approval-pending.png)
 
 ---
 
@@ -146,13 +149,16 @@ After approval, the Dashboard shows:
   - **Weekly Review Schedule** — a 7-day plan; click to expand
 - **Profile** section — a collapsible panel where you can review and edit your profile.
 
+![Student Dashboard](docs/images/user-manual/05-student-dashboard.png)
+
 ### 6.2 Taking a Mock Exam
 
 1. From the sidebar, click **Start Mock Exam** (or **Take Exam** from the Dashboard).
 2. The **Exam Preview** screen shows the exam rules (number of items, time limit, passing threshold).
 3. Click **Start Exam** to begin.
 
-> A "screenshot here" note — replace this with a screenshot of the exam preview and exam screen.
+![Exam preview](docs/images/user-manual/06-exam-preview.png)
+![Exam screen](docs/images/user-manual/07-exam.png)
 
 **While taking the exam:**
 - A **timer** counts down. The exam **auto-submits** when time runs out.
@@ -166,11 +172,15 @@ After approval, the Dashboard shows:
 2. Review each question you answered incorrectly, along with the correct answer and explanation.
 3. Use this to focus your study before the next attempt.
 
+![Review Missed](docs/images/user-manual/08-review-missed.png)
+
 ### 6.4 Analytics
 
 1. From the sidebar, open **Analytics**.
 2. View your **score history** across all exams taken.
 3. See **trends** and your performance per subject so you know where you are improving.
+
+![Analytics](docs/images/user-manual/09-analytics.png)
 
 ### 6.5 Certification Status
 
@@ -179,7 +189,7 @@ After approval, the Dashboard shows:
 3. **Eligibility rule:** you must achieve **3 consecutive passing mock board attempts** based on your category threshold. Once eligible, the admin can issue your certificate.
 4. If a certificate has been issued, your **verification code** is shown here so you can prove its authenticity.
 
-> A "screenshot here" note — replace this with a screenshot of the Certification Status page.
+![Certification Status](docs/images/user-manual/10-certification-status.png)
 
 ---
 
@@ -193,6 +203,8 @@ Shows classroom-wide summary cards:
 - **Completion Rate**
 - **Program** (your program/specialization)
 
+![Instructor Dashboard](docs/images/user-manual/11-instructor-dashboard.png)
+
 ### 7.2 Exam Setup (Exam Configuration)
 1. From the sidebar, click **Exam Setup**.
 2. Configure the exam for your class/cohort:
@@ -200,7 +212,7 @@ Shows classroom-wide summary cards:
    - Set or adjust the **passing threshold**.
 3. Save your settings. These apply to the exams your students take.
 
-> A "screenshot here" note — replace this with a screenshot of the Exam Setup page.
+![Instructor Exam Setup](docs/images/user-manual/12-exam-setup.png)
 
 ### 7.3 Question Bank
 1. From the sidebar, click **Question Bank**.
@@ -208,6 +220,8 @@ Shows classroom-wide summary cards:
 3. Use the search or filters to find questions.
 
 > Depending on your permissions, you may be able to add or edit questions. Contact your admin if you need question-writing access.
+
+![Question Bank](docs/images/user-manual/13-question-bank.png)
 
 ### 7.4 Student Performance
 1. From the sidebar, click **Student Performance**.
@@ -218,10 +232,14 @@ Shows classroom-wide summary cards:
    - Progress over time
 3. Click a student to view their **detailed performance**.
 
+![Student Performance](docs/images/user-manual/14-student-performance.png)
+
 ### 7.5 Class Analytics
 1. From the sidebar, click **Class Analytics**.
 2. View **class-wide statistics**, such as average scores, pass rates, and subject performance across all your students.
 3. Use this to identify which topics the class struggles with and adjust your review sessions.
+
+![Class Analytics](docs/images/user-manual/15-class-analytics.png)
 
 ---
 
@@ -239,6 +257,8 @@ On the very first use, someone must create the administrator account:
 6. A message confirms the account was created. Click **Back to login**.
 7. Log in with the new admin credentials.
 
+![Admin Registration](docs/images/user-manual/02-admin-register.png)
+
 > There is only **one** self-registration in the whole system — this first admin account. All other users (including other admins) are managed from the Admin Panel.
 
 ### 8.2 Admin Panel (Hub)
@@ -248,6 +268,8 @@ After logging in as admin, click **Admin Panel** in the sidebar. This is the con
 - **Summary cards:** Total Users, Exams Taken, Question Bank count, Pending Approvals
 - A **Pending Access Requests** alert when there are requests waiting (click it to go straight to User Management)
 - **Module cards** that jump to the pages below
+
+![Admin Panel](docs/images/user-manual/16-admin-panel.png)
 
 ### 8.3 User Management (approve/deny access, manage users)
 
@@ -259,7 +281,7 @@ After logging in as admin, click **Admin Panel** in the sidebar. This is the con
 4. Use the **Select All** checkbox in the header to select all students shown in the current filtered list at once.
 5. You can also create accounts for new students/instructors or edit existing users here.
 
-> A "screenshot here" note — replace this with a screenshot of the User Management page.
+![User Management](docs/images/user-manual/17-user-management.png)
 
 ### 8.4 Exam Settings (global defaults)
 
@@ -278,7 +300,7 @@ After logging in as admin, click **Admin Panel** in the sidebar. This is the con
 
 > These categories are what students choose in their profile setup. Changing them changes the options available to new students.
 
-> A "screenshot here" note — replace this with a screenshot of the Exam Settings page.
+![Exam Settings](docs/images/user-manual/18-exam-settings.png)
 
 ### 8.5 System Settings (branding & backup)
 
@@ -302,7 +324,7 @@ After logging in as admin, click **Admin Panel** in the sidebar. This is the con
 - **Download System Backup** — downloads a `.zip` of the frontend + backend package.
 - **Restore System** — restores the system from a `.zip` file. A message will note that the backend/frontend may need a restart to apply changes.
 
-> A "screenshot here" note — replace this with a screenshot of the System Settings page.
+![System Settings](docs/images/user-manual/19-system-settings.png)
 
 ### 8.6 Audit Logs
 
@@ -311,6 +333,8 @@ After logging in as admin, click **Admin Panel** in the sidebar. This is the con
 3. Use the **search box** to filter by action or detail text.
 4. Use the **From** and **To** date pickers to filter by date range.
 
+![Audit Logs](docs/images/user-manual/20-audit-logs.png)
+
 ### 8.7 Certification Management
 
 1. Open **Certification** (under Content in the sidebar).
@@ -318,6 +342,8 @@ After logging in as admin, click **Admin Panel** in the sidebar. This is the con
 3. **Pending Eligibility Approval:** when a learner reaches **3 consecutive passing mock board attempts**, they appear here. Click **Approve + Generate** to issue their certificate. A certificate ID and verification code are generated.
 4. **Issued Certificates:** lists all certificates with ID, learner, category, issue date, and **verification code**. Click **Revoke** to revoke a certificate.
 5. Give students their **verification code** so they can prove the certificate is authentic.
+
+![Certification Management](docs/images/user-manual/21-certification-management.png)
 
 ---
 
@@ -391,3 +417,45 @@ A: Yes. Edit it from the Dashboard. Saving changes submits a new request that th
 ---
 
 *End of manual. For support, contact your instructor or administrator.*
+
+---
+
+## Appendix A: Screenshot Checklist
+
+To add the images, capture a screenshot of each page below and save it in the **`docs/images/user-manual/`** folder using the exact filename listed. Then commit and push. Each screenshot appears automatically in the matching section of this manual.
+
+> When taking the screenshots, note which role the page belongs to (you must be logged in as that role) and that the logo/school name shown is saved per browser/device.
+
+| # | Filename | Page (role) | What to capture |
+|---|---|---|---|
+| 01 | `01-login.png` | Login page (all) | Login form with logo and school name |
+| 02 | `02-admin-register.png` | Admin Registration (public) | Email, password, admin key form |
+| 03 | `03-student-profile-setup.png` | Student Profile & Exam Setup (student) | Full form incl. subject chips |
+| 04 | `04-approval-pending.png` | Approval Pending (student) | Pending status and message |
+| 05 | `05-student-dashboard.png` | Student Dashboard | Summary cards + recommendations |
+| 06 | `06-exam-preview.png` | Exam Preview (student) | Exam rules: timer, items, threshold |
+| 07 | `07-exam.png` | Exam screen (student) | A question with the timer running |
+| 08 | `08-review-missed.png` | Review Missed (student) | List of incorrectly answered items |
+| 09 | `09-analytics.png` | Analytics (student) | Score history / charts |
+| 10 | `10-certification-status.png` | Certification Status (student) | Eligibility and verification code |
+| 11 | `11-instructor-dashboard.png` | Instructor Dashboard (instructor) | Class-wide summary cards |
+| 12 | `12-exam-setup.png` | Instructor Exam Setup (instructor) | Exam configuration form |
+| 13 | `13-question-bank.png` | Question Bank (instructor/admin) | Question library |
+| 14 | `14-student-performance.png` | Student Performance (instructor) | Table of students |
+| 15 | `15-class-analytics.png` | Class Analytics (instructor) | Class-wide statistics |
+| 16 | `16-admin-panel.png` | Admin Panel (admin) | Stat cards and module cards |
+| 17 | `17-user-management.png` | User Management (admin) | User list + approve/deny |
+| 18 | `18-exam-settings.png` | Admin Exam Settings (admin) | Timers and licensure categories |
+| 19 | `19-system-settings.png` | Admin System Settings (admin) | Logo, school name, backup |
+| 20 | `20-audit-logs.png` | Audit Logs (admin) | Activity log feed |
+| 21 | `21-certification-management.png` | Certification Management (admin) | Pending eligibility and issued certs |
+
+```text
+docs/images/user-manual/
+├── README.md          <- guide on how to take/name the screenshots
+├── 01-login.png       <- your screenshots go here (drop them in)
+├── 02-admin-register.png
+├── ... (21 files total)
+```
+
+After adding the images, the `USER_MANUAL.md` will display them inline. Until a filename exists, the manual shows a broken image icon for that entry.
