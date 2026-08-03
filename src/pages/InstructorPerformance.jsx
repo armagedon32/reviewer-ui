@@ -37,7 +37,9 @@ export default function InstructorPerformance() {
             <button onClick={() => navigate("/instructor/class-analytics")}>
               Class-Level Performance Analytics
             </button>
-            <button>Individual Student Performance List</button>
+            <button onClick={() => navigate("/instructor/student-performance")}>
+              Individual Student Performance List
+            </button>
             <button>Topic-Based Strength and Weakness Analysis</button>
             <button>Performance Trend / Momentum Indicator</button>
             <button>Mock Board Attempt History</button>

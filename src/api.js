@@ -93,6 +93,17 @@ export async function getClassAnalyticsApi(program, letTrack) {
   return data;
 }
 
+export async function getStudentPerformanceApi(userId) {
+  const res = await fetch(`${API_URL}/exam/student/${userId}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load student performance");
+  }
+  return data;
+}
+
 export async function getExamStatsApi(program) {
   const query = program ? `?program=${encodeURIComponent(program)}` : "";
   const res = await fetch(`${API_URL}/exam/stats${query}`, {
