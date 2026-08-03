@@ -223,23 +223,59 @@ Shows classroom-wide summary cards:
 
 ![Question Bank](docs/images/user-manual/13-question-bank.png)
 
-### 7.4 Student Performance
-1. From the sidebar, click **Student Performance**.
-2. See an **overview of each student** in your class:
-   - Number of exams taken
-   - Average scores
-   - Pass/fail status
-   - Progress over time
-3. Click a student to view their **detailed performance**.
+### 7.4 Performance Hub (Student Performance)
 
-![Student Performance](docs/images/user-manual/14-student-performance.png)
+From the sidebar, click **Student Performance** to open the **Performance Hub**. This page lists all the instructor monitoring tools:
 
-### 7.5 Class Analytics
+- **Class-Level Performance Analytics** — see [Section 7.6](#76-class-analytics)
+- **Individual Student Performance List** — see [Section 7.5](#75-individual-student-performance-list)
+- **Preview Exam Sheet** — see [Section 7.7](#77-preview-exam-sheet)
+- Topic-Based Strength and Weakness Analysis
+- Performance Trend / Momentum Indicator
+- Mock Board Attempt History
+- Readiness Indicator
+
+Click a module to open it. Use the **Back to Dashboard** button in the top-right to return to your dashboard.
+
+### 7.5 Individual Student Performance List
+
+The **Individual Student Performance List** lets you view a single student's complete performance record in detail.
+
+1. From the Performance Hub, click **Individual Student Performance List**.
+2. Optionally filter the class using the **Program** and **LET Track** dropdowns at the top right.
+3. Use the **search box** to find a student by email, program, or major.
+4. The student list (left panel) shows each student's **email**, **program/major**, and **latest score**. The score is color-coded: green = passing, yellow = borderline, red = failing.
+5. Click a student's row to load their details.
+
+The detail panel shows:
+
+- **Student Profile** — full name, student ID, email, program/degree, year level, section/class, track or specialization, and required passing threshold.
+- **Summary cards** — Total Attempts, Average Score, Latest Score, Pass Rate, and Best Score.
+- **Readiness Indicator** — a label (Ready / Approaching / Developing / At Risk) computed from the average of the last 3 attempts and the overall pass rate. Weak subjects are also listed here.
+- **Subject Performance** — a per-subject average bar chart that shows which subjects the student is strong in and which need improvement.
+- **Score Trend** — a bar chart of the student's scores across their attempts over time.
+- **Mock Board Attempt History** — a full table of every attempt with date, exam type, score (e.g., 30/50), percentage, and result (PASS/FAIL).
+
+![Individual Student Performance](docs/images/user-manual/14-student-performance.png)
+
+### 7.6 Class Analytics
+
 1. From the sidebar, click **Class Analytics**.
-2. View **class-wide statistics**, such as average scores, pass rates, and subject performance across all your students.
-3. Use this to identify which topics the class struggles with and adjust your review sessions.
+2. Optionally filter by **Program** (LET / CPA) and **LET Track** (Elementary / Secondary).
+3. View **class-wide statistics**:
+   - **Summary cards** — Class Average, Pass Rate, Active Students, Students with Exams, and Total Attempts.
+   - **Subject Weakness Analysis** — class average per subject and how many students score below 60%.
+   - **Score Distribution** — how many students fall into each score range.
+   - **Student Performance table** — every student with their latest score, result, attempt count, weak subjects, track, and program (click a column header to sort).
+   - **Class Performance Trend** — the class average over the last 14 days.
+4. Use this to identify which topics the class struggles with and adjust your review sessions.
 
 ![Class Analytics](docs/images/user-manual/15-class-analytics.png)
+
+### 7.7 Preview Exam Sheet
+
+1. From the Performance Hub (or the sidebar), click **Preview Exam Sheet**.
+2. Review the exam the way students will see it — the number of items, the time limit, and the passing threshold.
 
 ---
 
@@ -441,7 +477,7 @@ To add the images, capture a screenshot of each page below and save it in the **
 | 11 | `11-instructor-dashboard.png` | Instructor Dashboard (instructor) | Class-wide summary cards |
 | 12 | `12-exam-setup.png` | Instructor Exam Setup (instructor) | Exam configuration form |
 | 13 | `13-question-bank.png` | Question Bank (instructor/admin) | Question library |
-| 14 | `14-student-performance.png` | Student Performance (instructor) | Table of students |
+| 14 | `14-student-performance.png` | Individual Student Performance (instructor) | Student list + detail panel |
 | 15 | `15-class-analytics.png` | Class Analytics (instructor) | Class-wide statistics |
 | 16 | `16-admin-panel.png` | Admin Panel (admin) | Stat cards and module cards |
 | 17 | `17-user-management.png` | User Management (admin) | User list + approve/deny |
