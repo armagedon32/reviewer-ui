@@ -280,6 +280,19 @@ export async function setUserStatusApi(userId, active) {
   return data;
 }
 
+export async function setUserRoleApi(userId, role) {
+  const res = await fetch(`${API_URL}/admin/users/${userId}/role`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ role }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to update user role");
+  }
+  return data;
+}
+
 export async function deleteUserApi(userId) {
   const res = await fetch(`${API_URL}/admin/users/${userId}`, {
     method: "DELETE",

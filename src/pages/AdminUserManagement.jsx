@@ -9,12 +9,14 @@ import {
   listAccessStatusesApi,
   listUsersApi,
   resetSelectedStudentExamsApi,
-  resetUserExamsApi,
+resetUserExamsApi,
   resetUserPasswordApi,
   setProfileEditPermissionApi,
+  setUserRoleApi,
   setUserStatusApi,
 } from "../api";
 import { getSystemLogo } from "../systemLogo";
+import { getUser } from "../auth";
 
 export default function AdminUserManagement() {
   const navigate = useNavigate();
@@ -107,6 +109,28 @@ export default function AdminUserManagement() {
       output += chars[Math.floor(Math.random() * chars.length)];
     }
     setCreateForm((prev) => ({ ...prev, password: output }));
+  };
+
+  const currentUserEmail = getUser()?.email || "";
+
+  const handleChangeRole = async (user, newRole) => {
+    if (user.role === newRole) return;
+    if (!window.confirm(`Change role of ${user.email} from "${user.role}" to "${newRole}"?`)) return;
+    try {
+      await setUserRoleApi(user.id, newRole);
+      refreshUsers();
+      showNotice({
+        type: "success",
+        title: "Role updated",
+        message: `${user.email} is now ${newRole}.`,
+      });
+    } catch (err) {
+      showNotice({
+        type: "error",
+        title: "Update failed",
+        message: err?.message || "Unable to change role.",
+      });
+    }
   };
 
   const filteredStudentIds = useMemo(
@@ -438,6 +462,24 @@ export default function AdminUserManagement() {
                       </p>
                     </div>
                     <div className="admin-user-actions">
+                      <select
+                        title="Change role"
+                        value={user.role}
+                        disabled={user.email === currentUserEmail}
+                        onChange={(e) => handleChangeRole(user, e.target.value)}
+                        style={{
+                          padding: "5px 8px",
+                          borderRadius: 6,
+                          border: "1px solid var(--border)",
+                          fontSize: 12,
+                          background: "var(--surface)",
+                          color: "var(--text)",
+                        }}
+                      >
+                        <option value="student">Student</option>
+                        <option value="instructor">Instructor</option>
+                        <option value="admin">Admin</option>
+                      </select>
                       {accessStatuses[user.id]?.status === "pending" && (
                         <>
                           <button
