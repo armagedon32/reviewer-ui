@@ -24,6 +24,8 @@ export default function InstructorExamPreview() {
   });
   const [savingId, setSavingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [notice, setNotice] = useState(null);
   const logoSrc = getSystemLogo();
 
   useEffect(() => {
@@ -164,19 +166,36 @@ export default function InstructorExamPreview() {
     }
   };
 
-  const deleteQuestion = async (id) => {
-    if (!window.confirm("Delete this question permanently?")) return;
+  const requestDelete = (q) => {
+    setDeleteTarget(q);
+  };
+
+  const cancelDelete = () => {
+    setDeleteTarget(null);
+  };
+
+  const performDelete = async () => {
+    const id = deleteTarget?.id;
+    if (!id) return;
     setDeletingId(id);
     try {
       await deleteQuestionApi(id);
       setQuestions((prev) => prev.filter((q) => q.id !== id));
       if (editingId === id) cancelEdit();
+      setDeleteTarget(null);
+      setNotice({ type: "success", message: "Question deleted." });
     } catch (err) {
-      window.alert(err?.message || "Unable to delete question.");
+      setNotice({ type: "error", message: err?.message || "Unable to delete question." });
     } finally {
       setDeletingId(null);
     }
   };
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 3500);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   if (loading) {
     return (
@@ -289,7 +308,7 @@ export default function InstructorExamPreview() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteQuestion(q.id)}
+                      onClick={() => requestDelete(q)}
                       disabled={deletingId === q.id}
                       style={{
                         background: "#ef4444",
@@ -424,6 +443,52 @@ export default function InstructorExamPreview() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Delete confirmation dialog */}
+      {deleteTarget && (
+        <div className="alert-overlay">
+          <div className="alert-modal confirm-modal">
+            <div className="confirm-icon danger">🗑</div>
+            <h3 className="confirm-title">Delete this question?</h3>
+            <p className="confirm-text">
+              This will permanently remove the question below. This action cannot be undone.
+            </p>
+            <p className="confirm-quote">{deleteTarget.question}</p>
+            <div className="confirm-actions">
+              <button
+                type="button"
+                className="confirm-cancel"
+                onClick={cancelDelete}
+                disabled={deletingId === deleteTarget.id}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="confirm-danger"
+                onClick={performDelete}
+                disabled={deletingId === deleteTarget.id}
+              >
+                {deletingId === deleteTarget.id ? "Deleting..." : "Delete question"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success / error toast */}
+      {notice && (
+        <div
+          className={`toast toast-${notice.type}`}
+          role="status"
+        >
+          <span>{notice.type === "success" ? "✓" : "✕"}</span>
+          <span>{notice.message}</span>
+          <button type="button" className="toast-close" onClick={() => setNotice(null)}>
+            ×
+          </button>
         </div>
       )}
     </div>
