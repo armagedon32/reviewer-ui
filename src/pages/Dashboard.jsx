@@ -843,7 +843,7 @@ export default function Dashboard() {
                       <span className="status-note">AI-powered insights</span>
                     </div>
 
-                    {rlRecommendation ? (
+                    {rlRecommendation && latestExam ? (
                       <>
                         <div className="highlight-card">
                           <p className="highlight-title">Suggested Activity</p>
