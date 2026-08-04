@@ -463,28 +463,24 @@ export default function Dashboard() {
       : classTrendDirection === "down"
         ? "Declining"
         : "Steady";
-  const instructorTotalScore = instructorRecentAttempts.reduce(
-    (sum, attempt) => sum + Number(attempt?.score || 0),
-    0
-  );
-  const instructorTotalItems = instructorRecentAttempts.reduce(
-    (sum, attempt) => sum + Number(attempt?.total || 0),
-    0
-  );
-  const instructorAvgScore = instructorRecentAttempts.length
-    ? Math.round(
-        instructorRecentAttempts.reduce(
-          (sum, attempt) => sum + Number(attempt?.percentage || 0),
-          0
-        ) / instructorRecentAttempts.length
-      )
-    : null;
-  const instructorCompletion = instructorTotalItems
-    ? Math.round((instructorTotalScore / instructorTotalItems) * 100)
-    : null;
-  const instructorActiveExaminees = new Set(
-    instructorRecentAttempts.map((attempt) => String(attempt?.email || "").trim()).filter(Boolean)
-  ).size;
+const instructorAvgScore =
+    classStats?.avg_score != null
+      ? Math.round(classStats.avg_score)
+      : instructorRecentAttempts.length
+        ? Math.round(
+            instructorRecentAttempts.reduce(
+              (sum, attempt) => sum + Number(attempt?.percentage || 0),
+              0
+            ) / instructorRecentAttempts.length
+          )
+        : null;
+  const instructorPassRate = classStats?.pass_rate != null ? classStats.pass_rate : null;
+  const instructorActiveExaminees =
+    classStats?.active_examinees != null
+      ? classStats.active_examinees
+      : new Set(
+          instructorRecentAttempts.map((attempt) => String(attempt?.email || "").trim()).filter(Boolean)
+        ).size;
 
   const averageScore = examHistory.length
     ? Math.round(
@@ -1034,7 +1030,7 @@ export default function Dashboard() {
                   <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
                     <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Active Examinees</p>
                     <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>{instructorActiveExaminees}</p>
-                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Unique students</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Students with attempts</p>
                   </div>
                   <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
                     <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Average Score</p>
@@ -1042,9 +1038,9 @@ export default function Dashboard() {
                     <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Across all attempts</p>
                   </div>
                   <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
-                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Completion Rate</p>
-                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: instructorCompletion != null ? "var(--success)" : "var(--accent)" }}>{instructorCompletion != null ? `${instructorCompletion}%` : "-"}</p>
-                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Score / Total items</p>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Pass Rate</p>
+                    <p style={{ fontSize: 30, fontWeight: 700, margin: "4px 0", color: instructorPassRate != null ? "var(--success)" : "var(--accent)" }}>{instructorPassRate != null ? `${instructorPassRate}%` : "-"}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>Passing attempts</p>
                   </div>
                   <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
                     <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>Program</p>
@@ -1110,8 +1106,8 @@ export default function Dashboard() {
                         <span className="metric-value">{instructorAvgScore != null ? `${instructorAvgScore}%` : "-"}</span>
                       </div>
                       <div className="metric">
-                        <span className="metric-label">Completion</span>
-                        <span className="metric-value">{instructorCompletion != null ? `${instructorCompletion}%` : "-"}</span>
+                        <span className="metric-label">Pass Rate</span>
+                        <span className="metric-value">{instructorPassRate != null ? `${instructorPassRate}%` : "-"}</span>
                       </div>
                       <div className="metric">
                         <span className="metric-label">Active Examinees</span>
