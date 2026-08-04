@@ -488,6 +488,18 @@ export async function clearQuestionsApi() {
   return data;
 }
 
+export async function deleteQuestionApi(questionId) {
+  const res = await fetch(`${API_URL}/questions/${questionId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to delete question");
+  }
+  return data;
+}
+
 export async function setProfileEditPermissionApi(userId, allowed) {
   const res = await fetch(`${API_URL}/admin/users/${userId}/profile-edit-permission`, {
     method: "POST",

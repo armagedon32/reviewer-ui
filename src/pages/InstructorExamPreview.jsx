@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listQuestionsApi, updateQuestionApi } from "../api";
+import { listQuestionsApi, updateQuestionApi, deleteQuestionApi } from "../api";
 import { getSystemLogo } from "../systemLogo";
 
 export default function InstructorExamPreview() {
@@ -23,6 +23,7 @@ export default function InstructorExamPreview() {
     difficulty: "Easy",
   });
   const [savingId, setSavingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const logoSrc = getSystemLogo();
 
   useEffect(() => {
@@ -163,6 +164,20 @@ export default function InstructorExamPreview() {
     }
   };
 
+  const deleteQuestion = async (id) => {
+    if (!window.confirm("Delete this question permanently?")) return;
+    setDeletingId(id);
+    try {
+      await deleteQuestionApi(id);
+      setQuestions((prev) => prev.filter((q) => q.id !== id));
+      if (editingId === id) cancelEdit();
+    } catch (err) {
+      window.alert(err?.message || "Unable to delete question.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="exam-page">
@@ -271,6 +286,17 @@ export default function InstructorExamPreview() {
                   <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button type="button" onClick={() => startEdit(q)}>
                       Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteQuestion(q.id)}
+                      disabled={deletingId === q.id}
+                      style={{
+                        background: "#ef4444",
+                        color: "white",
+                      }}
+                    >
+                      {deletingId === q.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
                 </div>
