@@ -250,8 +250,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (user.role !== "student") return;
     getNextRecommendationApi()
-      .then((data) => {
-        setRlRecommendation(data);
+.then((data) => {
+        setRlRecommendation(data && data.has_recommendation !== false ? data : null);
       })
       .catch(() => {
         setRlRecommendation(null);
