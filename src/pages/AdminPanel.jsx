@@ -63,6 +63,12 @@ export default function AdminPanel() {
       icon: "📋",
     },
     {
+      title: "Recommendation Engine (RL)",
+      desc: "Live RL metrics, A/B experiment & agent toggle",
+      path: "/admin/recommendation-engine",
+      icon: "🧠",
+    },
+    {
       title: "Question Bank",
       desc: "Browse, add & manage all exam questions",
       path: "/question-bank",

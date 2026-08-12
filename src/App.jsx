@@ -15,6 +15,7 @@ import AdminCertificationManagement from "./pages/AdminCertificationManagement";
 import AdminExamSettings from "./pages/AdminExamSettings";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import AdminAuditLogs from "./pages/AdminAuditLogs";
+import AdminRecommendationEngine from "./pages/AdminRecommendationEngine";
 import AdminRegister from "./pages/AdminRegister";
 import Analytics from "./pages/Analytics";
 import ChangePassword from "./pages/ChangePassword";
@@ -152,6 +153,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminAuditLogs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/recommendation-engine"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminRecommendationEngine />
               </ProtectedRoute>
             }
           />

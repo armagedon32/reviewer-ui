@@ -59,6 +59,7 @@ const LINK_GROUPS = {
       label: "Content",
       links: [
         { to: "/question-bank", label: "Question Bank", icon: "◫" },
+        { to: "/admin/recommendation-engine", label: "Recommendation Engine (RL)", icon: "🧠" },
         { to: "/admin/certification-management", label: "Certification", icon: "✓" },
       ],
     },
