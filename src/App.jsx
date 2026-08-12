@@ -22,6 +22,7 @@ import ChangePassword from "./pages/ChangePassword";
 import InstructorPerformance from "./pages/InstructorPerformance";
 import InstructorStudentPerformance from "./pages/InstructorStudentPerformance";
 import ClassAnalytics from "./pages/ClassAnalytics";
+import InstructorRlEngine from "./pages/InstructorRlEngine";
 import InstructorExamSettings from "./pages/InstructorExamSettings";
 import InstructorExamPreview from "./pages/InstructorExamPreview";
 import ApprovalPending from "./pages/ApprovalPending";
@@ -104,6 +105,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["instructor", "admin"]}>
                 <InstructorStudentPerformance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/instructor/recommendation-engine"
+            element={
+              <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                <InstructorRlEngine />
               </ProtectedRoute>
             }
           />

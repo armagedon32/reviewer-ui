@@ -35,6 +35,7 @@ const LINK_GROUPS = {
       links: [
         { to: "/instructor-performance", label: "Student Performance", icon: "◔" },
         { to: "/instructor/class-analytics", label: "Class Analytics", icon: "▤" },
+        { to: "/instructor/recommendation-engine", label: "Recommendation Engine (RL)", icon: "🧠" },
       ],
     },
   ],

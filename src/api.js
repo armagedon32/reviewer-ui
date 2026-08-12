@@ -548,6 +548,19 @@ export async function getRlMetricsApi() {
   return data;
 }
 
+export async function getInstructorRlMetricsApi(program) {
+  const params = new URLSearchParams();
+  if (program) params.set("program", program);
+  const res = await fetch(`${API_URL}/recommend/instructor/metrics?${params.toString()}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to load instructor RL metrics");
+  }
+  return data;
+}
+
 export async function listCertificationManagementApi() {
   const res = await fetch(`${API_URL}/admin/certifications`, {
     headers: authHeaders(),
