@@ -14,11 +14,6 @@ const ACTION_LABELS = {
   remedial_lesson: "Remedial Lesson Block",
 };
 
-const POLICY_MODES = {
-  baseline: "Random exploration (no learning)",
-  bandit: "Thompson sampling (RL arm)",
-};
-
 export default function AdminRecommendationEngine() {
   const navigate = useNavigate();
   const logoSrc = getSystemLogo();
@@ -33,10 +28,10 @@ export default function AdminRecommendationEngine() {
         setMetrics(m);
         setSettings(s);
       })
-      .catch((err) => setError(err?.message || "Failed to load RL data"));
+      .catch((err) => setError(err?.message || "Failed to load adaptive engine data"));
   }, []);
 
-  const toggleRlEnabled = async () => {
+  const toggleAdaptiveEnabled = async () => {
     setSaving(true);
     setError(null);
     try {
@@ -47,7 +42,7 @@ export default function AdminRecommendationEngine() {
       });
       setSettings(updated);
     } catch (err) {
-      setError(err?.message || "Failed to update RL setting");
+      setError(err?.message || "Failed to update adaptive engine setting");
     } finally {
       setSaving(false);
     }
@@ -56,6 +51,9 @@ export default function AdminRecommendationEngine() {
   const enabled = Boolean(settings?.rl_enabled);
   const actionTotal = metrics
     ? Object.values(metrics.action_distribution || {}).reduce((a, b) => a + b, 0)
+    : 0;
+  const ruleTotal = metrics
+    ? Object.values(metrics.rule_distribution || {}).reduce((a, b) => a + b, 0)
     : 0;
 
   return (
@@ -66,9 +64,10 @@ export default function AdminRecommendationEngine() {
             <img src={logoSrc} alt="System logo" className="review-logo" />
             <div className="admin-title-block">
               <p className="dashboard-kicker">Admin</p>
-              <h2 className="dashboard-title">Recommendation Engine (RL)</h2>
+              <h2 className="dashboard-title">Adaptive Recommendation Engine (Simulated RL)</h2>
               <p className="dashboard-email">
-                Live view of the adaptive recommendation agent &amp; its A/B experiment.
+                Live view of the rule-based adaptive agent that maps learner state to
+                instructional actions.
               </p>
             </div>
           </div>
@@ -94,10 +93,10 @@ export default function AdminRecommendationEngine() {
         )}
 
         {!metrics ? (
-          <p className="history-empty">Loading RL metrics...</p>
+          <p className="history-empty">Loading adaptive engine data...</p>
         ) : (
           <>
-            {/* RL Status banner */}
+            {/* Adaptive engine status banner */}
             <div
               className="dashboard-card"
               style={{
@@ -118,7 +117,7 @@ export default function AdminRecommendationEngine() {
                   <span style={{ fontSize: 34, lineHeight: 1 }}>{enabled ? "🧠" : "💤"}</span>
                   <div>
                     <h3 style={{ margin: 0, fontSize: 17 }}>
-                      Reinforcement Learning agent{" "}
+                      Adaptive recommendation engine{" "}
                       <span
                         className="status-pill"
                         style={{
@@ -130,18 +129,17 @@ export default function AdminRecommendationEngine() {
                       </span>
                     </h3>
                     <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-                      Policy version {metrics.policy_version} · Experiment split{" "}
-                      {metrics.experiment_split}% no-learning exploration baseline /{" "}
-                      {100 - (metrics.experiment_split || 50)}% Thompson bandit
+                      Policy version {metrics.policy_version} · Rule-based adaptive logic,
+                      simulated RL
                     </p>
                   </div>
                 </div>
-                <button type="button" onClick={toggleRlEnabled} disabled={saving}>
+                <button type="button" onClick={toggleAdaptiveEnabled} disabled={saving}>
                   {saving
                     ? "Saving..."
                     : enabled
-                      ? "Turn RL Off"
-                      : "Turn RL On"}
+                      ? "Turn Adaptive Engine Off"
+                      : "Turn Adaptive Engine On"}
                 </button>
               </div>
             </div>
@@ -153,41 +151,37 @@ export default function AdminRecommendationEngine() {
                 <p style={{ fontSize: 32, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>
                   {metrics.recommendations_total ?? 0}
                 </p>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Agent decisions served</p>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Adaptive decisions served</p>
               </div>
               <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>Reward Events (30d)</p>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>Feedback Events (30d)</p>
                 <p style={{ fontSize: 32, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>
                   {metrics.feedback_total ?? 0}
                 </p>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Auto rewards after exams</p>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Performance feedback after exams</p>
               </div>
               <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>Baseline avg reward</p>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>Avg performance delta</p>
                 <p style={{ fontSize: 32, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>
-                  {metrics.ab_groups?.baseline?.avg_reward ?? "-"}
+                  {metrics.avg_performance_delta ?? "-"}
                 </p>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
-                  Exploration arm ({metrics.ab_groups?.baseline?.feedback_count ?? 0} rewards)
-                </p>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Normalized score improvement</p>
               </div>
               <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>Bandit avg reward</p>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>Active decision rules</p>
                 <p style={{ fontSize: 32, fontWeight: 700, margin: "4px 0", color: "var(--accent)" }}>
-                  {metrics.ab_groups?.bandit?.avg_reward ?? "-"}
+                  {metrics.decision_rules?.length ?? 0}
                 </p>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
-                  Thompson arm ({metrics.ab_groups?.bandit?.feedback_count ?? 0} rewards)
-                </p>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Mastery-band mappings</p>
               </div>
             </div>
 
             <div className="dashboard-grid" style={{ marginBottom: 20 }}>
-              {/* A/B groups table */}
+              {/* Decision rules table */}
               <section className="dashboard-card">
                 <div className="card-header">
-                  <h3>A/B Experiment — Baseline vs Bandit</h3>
-                  <span className="status-note">Users split deterministically by ID hash</span>
+                  <h3>Policy-like Decision Rules</h3>
+                  <span className="status-note">Predefined mastery-band mappings</span>
                 </div>
                 <table
                   style={{
@@ -198,29 +192,19 @@ export default function AdminRecommendationEngine() {
                 >
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left", padding: "8px" }}>Arm</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>Policy</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>Recommendations</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>Rewards</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>Avg Reward</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Band</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Condition</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Action</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Difficulty</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {["baseline", "bandit"].map((group) => (
-                      <tr key={group}>
-                        <td style={{ padding: "8px", fontWeight: 700 }}>{group}</td>
-                        <td style={{ padding: "8px" }}>
-                          {group === "baseline" ? "Random exploration (no learning)" : "Thompson sampling"}
-                        </td>
-                        <td style={{ padding: "8px" }}>
-                          {metrics.ab_groups?.[group]?.recommendations ?? 0}
-                        </td>
-                        <td style={{ padding: "8px" }}>
-                          {metrics.ab_groups?.[group]?.feedback_count ?? 0}
-                        </td>
-                        <td style={{ padding: "8px" }}>
-                          {metrics.ab_groups?.[group]?.avg_reward ?? "-"}
-                        </td>
+                    {(metrics.decision_rules || []).map((rule) => (
+                      <tr key={rule.band}>
+                        <td style={{ padding: "8px", fontWeight: 700 }}>{rule.band}</td>
+                        <td style={{ padding: "8px" }}>{rule.condition} mastery</td>
+                        <td style={{ padding: "8px" }}>{rule.action_label}</td>
+                        <td style={{ padding: "8px" }}>{rule.difficulty}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -268,17 +252,31 @@ export default function AdminRecommendationEngine() {
                     </div>
                   ))
                 )}
-                {metrics.policy_mode_counts && (
+                {metrics.rule_distribution && (
                   <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
                     <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 6px", fontWeight: 700 }}>
-                      Decisions by policy mode
+                      Decisions by mastery band
                     </p>
-                    {Object.entries(metrics.policy_mode_counts).map(([mode, count]) => (
-                      <p key={mode} style={{ fontSize: 13, margin: "2px 0", display: "flex", justifyContent: "space-between" }}>
-                        <span>{POLICY_MODES[mode] || mode}</span>
-                        <span style={{ color: "var(--text-secondary)" }}>{count}</span>
+                    {ruleTotal === 0 ? (
+                      <p style={{ fontSize: 13, margin: "2px 0", color: "var(--text-secondary)" }}>
+                        No recommendations served yet.
                       </p>
-                    ))}
+                    ) : (
+                      Object.entries(metrics.rule_distribution).map(([band, count]) => (
+                        <p
+                          key={band}
+                          style={{
+                            fontSize: 13,
+                            margin: "2px 0",
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <span>{band}</span>
+                          <span style={{ color: "var(--text-secondary)" }}>{count}</span>
+                        </p>
+                      ))
+                    )}
                   </div>
                 )}
               </section>
@@ -287,36 +285,35 @@ export default function AdminRecommendationEngine() {
             {/* How it works */}
             <section className="dashboard-card">
               <div className="card-header">
-                <h3>How the RL component works (for verification)</h3>
-                <span className="status-note">Live implementation</span>
+                <h3>How the simulated RL component works (for verification)</h3>
+                <span className="status-note">Rule-based adaptive logic</span>
               </div>
               <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8, fontSize: 13.5, lineHeight: 1.55 }}>
                 <li>
                   When a student opens the dashboard, the backend calls{" "}
-                  <code>/recommend/next-action</code>. The user is deterministically placed into a{" "}
-                  <strong>baseline</strong> (no-learning) or <strong>bandit</strong> (RL) arm using a hash
-                  of their ID (50/50 when RL is enabled).
+                  <code>/recommend/next-action</code>. It reads the learner&apos;s state: latest score,
+                  average subject mastery, pass streak, and weak subject areas.
                 </li>
                 <li>
-                  Each action has a <strong>Beta</strong> posterior — Beta(1,1), i.e. uniform, before any
-                  data. The <strong>bandit arm</strong> draws one sample from each action&apos;s posterior and
-                  plays the action with the highest draw (<strong>Thompson sampling</strong>), so it exploits
-                  what has worked while still exploring. The baseline arm picks uniformly at random and
-                  never learns.
+                  The <strong>state</strong> is mapped to an <strong>action</strong> through the
+                  predefined decision rules above: below 60% mastery → remedial lessons, 60–74% →
+                  guided subject drills, 75–89% → mixed quizzes, 90%+ → full timed mock boards.
+                  Rules are fixed by design — no autonomous policy learning occurs.
                 </li>
                 <li>
-                  After the student takes an exam, <code>/exam/submit</code> automatically computes a{" "}
-                  <strong>reward</strong> from the score delta and pass/fail outcome and stores it as a{" "}
-                  <code>feedback</code> event in <code>rl_events</code>.
+                  After the student takes an exam, <code>/exam/submit</code> records{" "}
+                  <strong>performance feedback</strong> — the normalized score improvement — as a{" "}
+                  <code>feedback</code> event in <code>rl_events</code>. This is a performance signal,
+                  not a reward used to re-train the rules.
                 </li>
                 <li>
-                  Each reward updates the played action&apos;s Beta posterior (positive reward adds to the
-                  success count, negative to the failure count). The agent&apos;s picks and rewards update the
-                  metrics above, so the two arms can be compared over time.
+                  The next recommendation reflects the updated learner state, so the agent
+                  <em> adapts</em> as mastery grows. The metrics above track which rules fired and how
+                  scores improved over time.
                 </li>
                 <li>
-                  Toggle the agent <strong>ON</strong> above to activate learning for the bandit arm;
-                  while OFF, every user receives random (no-learning) recommendations.
+                  Toggle the engine <strong>ON</strong> above to serve adaptive recommendations; while
+                  OFF, students receive no adaptive recommendations.
                 </li>
               </ol>
             </section>
