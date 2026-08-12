@@ -15,9 +15,8 @@ const ACTION_LABELS = {
 };
 
 const POLICY_MODES = {
-  rule_disabled: "Rule-based (RL off)",
-  rule_baseline: "Rule-based (baseline arm)",
-  bandit: "Thompson bandit (RL arm)",
+  baseline: "Random exploration (no learning)",
+  bandit: "Thompson sampling (RL arm)",
 };
 
 export default function AdminRecommendationEngine() {
@@ -132,7 +131,7 @@ export default function AdminRecommendationEngine() {
                     </h3>
                     <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
                       Policy version {metrics.policy_version} · Experiment split{" "}
-                      {metrics.experiment_split}% rule baseline /{" "}
+                      {metrics.experiment_split}% no-learning exploration baseline /{" "}
                       {100 - (metrics.experiment_split || 50)}% Thompson bandit
                     </p>
                   </div>
@@ -169,7 +168,7 @@ export default function AdminRecommendationEngine() {
                   {metrics.ab_groups?.baseline?.avg_reward ?? "-"}
                 </p>
                 <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
-                  Rule arm ({metrics.ab_groups?.baseline?.feedback_count ?? 0} rewards)
+                  Exploration arm ({metrics.ab_groups?.baseline?.feedback_count ?? 0} rewards)
                 </p>
               </div>
               <div className="dashboard-card" style={{ textAlign: "center", padding: "18px 12px" }}>
@@ -211,7 +210,7 @@ export default function AdminRecommendationEngine() {
                       <tr key={group}>
                         <td style={{ padding: "8px", fontWeight: 700 }}>{group}</td>
                         <td style={{ padding: "8px" }}>
-                          {group === "baseline" ? "Rule-based guardrails" : "Thompson sampling"}
+                          {group === "baseline" ? "Random exploration (no learning)" : "Thompson sampling"}
                         </td>
                         <td style={{ padding: "8px" }}>
                           {metrics.ab_groups?.[group]?.recommendations ?? 0}
@@ -295,12 +294,15 @@ export default function AdminRecommendationEngine() {
                 <li>
                   When a student opens the dashboard, the backend calls{" "}
                   <code>/recommend/next-action</code>. The user is deterministically placed into a{" "}
-                  <strong>baseline</strong> (rule-based) or <strong>bandit</strong> (RL) arm using a hash
+                  <strong>baseline</strong> (no-learning) or <strong>bandit</strong> (RL) arm using a hash
                   of their ID (50/50 when RL is enabled).
                 </li>
                 <li>
-                  The <strong>bandit arm</strong> uses <strong>Thompson sampling</strong> over historical
-                  rewards to choose the next study action, while the baseline arm applies fixed guardrail rules.
+                  Each action has a <strong>Beta</strong> posterior — Beta(1,1), i.e. uniform, before any
+                  data. The <strong>bandit arm</strong> draws one sample from each action&apos;s posterior and
+                  plays the action with the highest draw (<strong>Thompson sampling</strong>), so it exploits
+                  what has worked while still exploring. The baseline arm picks uniformly at random and
+                  never learns.
                 </li>
                 <li>
                   After the student takes an exam, <code>/exam/submit</code> automatically computes a{" "}
@@ -308,12 +310,13 @@ export default function AdminRecommendationEngine() {
                   <code>feedback</code> event in <code>rl_events</code>.
                 </li>
                 <li>
-                  The agent&apos;s picks and rewards update the metrics above, so the two arms can be compared
-                  over time.
+                  Each reward updates the played action&apos;s Beta posterior (positive reward adds to the
+                  success count, negative to the failure count). The agent&apos;s picks and rewards update the
+                  metrics above, so the two arms can be compared over time.
                 </li>
                 <li>
-                  Toggle the agent <strong>ON</strong> above to activate Thompson sampling for the bandit arm;
-                  while OFF, every user receives rule-based recommendations.
+                  Toggle the agent <strong>ON</strong> above to activate learning for the bandit arm;
+                  while OFF, every user receives random (no-learning) recommendations.
                 </li>
               </ol>
             </section>
