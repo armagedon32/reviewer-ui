@@ -665,12 +665,16 @@ export default function AdminUserManagement() {
                       </select>
                       {accessStatuses[user.id]?.status === "pending" && (
                         <>
-                          <button
-                            className="admin-action-btn warning"
-                            onClick={() => handleApproveRequest(user)}
-                          >
-                            Approve
-                          </button>
+                          {user.profile_completed ? (
+                            <button
+                              className="admin-action-btn warning"
+                              onClick={() => handleApproveRequest(user)}
+                            >
+                              Approve
+                            </button>
+                          ) : (
+                            <span className="status-note">Profile not yet filled</span>
+                          )}
                           <button
                             className="admin-action-btn fail"
                             onClick={() => handleRejectRequest(user)}
