@@ -321,9 +321,10 @@ export async function bulkDeleteUsersApi(userIds, deleteAllStudents = false) {
 export async function importUsersCsvApi(file) {
   const formData = new FormData();
   formData.append("file", file);
+  const user = getUser();
   const res = await fetch(`${API_URL}/admin/users/import`, {
     method: "POST",
-    headers: authHeaders(),
+    headers: { Authorization: `Bearer ${user?.token || ""}` },
     body: formData,
   });
   const data = await res.json().catch(() => ({}));
