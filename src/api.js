@@ -334,6 +334,18 @@ export async function importUsersCsvApi(file) {
   return data;
 }
 
+export async function importCredentialsApi() {
+  const res = await fetch(`${API_URL}/admin/users/import-credentials`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to fetch temporary passwords");
+  }
+  return data;
+}
+
 export async function resetUserExamsApi(userId) {
   const res = await fetch(`${API_URL}/admin/users/${userId}/exams`, {
     method: "DELETE",

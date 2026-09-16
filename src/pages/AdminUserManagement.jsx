@@ -8,6 +8,7 @@ import {
   deleteUserApi,
   denyAccessRequestApi,
   importUsersCsvApi,
+  importCredentialsApi,
   listAccessStatusesApi,
   listUsersApi,
   resetSelectedStudentExamsApi,
@@ -356,10 +357,10 @@ export default function AdminUserManagement() {
   };
 
   const downloadUsersCsv = () => {
-    const header = "email,role,password";
+    const header = "email,role";
     const rows = [
       header,
-      ...filteredUsers.map((u) => `${u.email},${u.role},`),
+      ...filteredUsers.map((u) => `${u.email},${u.role}`),
     ];
     const csv = rows.join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -423,24 +424,46 @@ export default function AdminUserManagement() {
     }
   };
 
-  const downloadImportCredentials = () => {
-    if (!lastImport?.created?.length) return;
-    const header = "email,role,temporary_password";
-    const rows = [
-      header,
-      ...lastImport.created.map((item) =>
-        [item.email, item.role, item.temporary_password || ""].join(",")
-      ),
-    ];
-    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "imported_accounts.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const handleGetTempPasswords = async () => {
+    try {
+      const result = await importCredentialsApi();
+      const issued = result?.created || [];
+      if (!issued.length) {
+        setNotice({
+          type: "info",
+          title: "No pending accounts",
+          message: "All accounts have already logged in and changed their password.",
+        });
+        return;
+      }
+      const header = "email,role,temporary_password";
+      const rows = [
+        header,
+        ...issued.map((item) =>
+          [item.email, item.role, item.temporary_password || ""].join(",")
+        ),
+      ];
+      const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "temp_passwords.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setNotice({
+        type: "success",
+        title: "Temp passwords generated",
+        message: `${issued.length} temporary password(s) downloaded. These are valid for 24 hours.`,
+      });
+    } catch (err) {
+      setNotice({
+        type: "error",
+        title: "Failed to get temp passwords",
+        message: err?.message || "Unable to generate temporary passwords.",
+      });
+    }
   };
 
   return (
@@ -530,8 +553,8 @@ export default function AdminUserManagement() {
           <div className="admin-csv-row">
             <span className="status-note">
               {lastImport?.created?.length
-                ? `${lastImport.created.length} account(s) from last import — get temp passwords below`
-                : "Bulk registration via CSV"}
+                ? `${lastImport.created.length} account(s) recently imported. Get temp passwords below.`
+                : "Bulk registration via CSV. Get temp passwords for accounts still on temp credentials."}
             </span>
             <div className="admin-bulk-buttons">
               <button type="button" className="admin-action-btn subtle" onClick={downloadCsvTemplate}>
@@ -550,11 +573,9 @@ export default function AdminUserManagement() {
               <button type="button" className="admin-action-btn" onClick={() => fileInputRef.current?.click()}>
                 Upload CSV
               </button>
-              {lastImport?.created?.length > 0 && (
-                <button type="button" className="admin-action-btn pass" onClick={downloadImportCredentials}>
-                  Download Temp Passwords
-                </button>
-              )}
+              <button type="button" className="admin-action-btn pass" onClick={handleGetTempPasswords}>
+                Download Temp Passwords
+              </button>
             </div>
           </div>
         </section>
