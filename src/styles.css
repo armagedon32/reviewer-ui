@@ -2073,6 +2073,22 @@ button:disabled {
   color: #f8fafc;
 }
 
+.admin-action-btn.danger {
+  background: #dc2626;
+  color: #f8fafc;
+}
+
+.admin-csv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
 .admin-action-btn.subtle {
   background: var(--surface);
   color: var(--text);

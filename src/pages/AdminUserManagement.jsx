@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InlineNotice from "../components/InlineNotice";
 import {
   approveAccessRequestApi,
+  bulkDeleteUsersApi,
   createUserApi,
   deleteUserApi,
   denyAccessRequestApi,
+  importUsersCsvApi,
   listAccessStatusesApi,
   listUsersApi,
   resetSelectedStudentExamsApi,
@@ -305,6 +307,120 @@ export default function AdminUserManagement() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!selectedStudentIds.length) return;
+    const confirmed = window.confirm(
+      `Delete ${selectedStudentIds.length} selected student account(s)? This permanently removes their accounts, profiles, and exam records.`
+    );
+    if (!confirmed) return;
+    try {
+      const result = await bulkDeleteUsersApi(selectedStudentIds, false);
+      setSelectedStudentIds([]);
+      refreshUsers();
+      showNotice({
+        type: "success",
+        title: "Selected students deleted",
+        message: `${result.deleted} student account(s) removed.`,
+      });
+    } catch (err) {
+      showNotice({
+        type: "error",
+        title: "Bulk delete failed",
+        message: err?.message || "Unable to delete selected students.",
+      });
+    }
+  };
+
+  const handleDeleteAllStudents = async () => {
+    const confirmed = window.confirm(
+      "Delete ALL student accounts? This permanently removes every student account, profile, and exam record. This cannot be undone."
+    );
+    if (!confirmed) return;
+    try {
+      const result = await bulkDeleteUsersApi([], true);
+      setSelectedStudentIds([]);
+      refreshUsers();
+      showNotice({
+        type: "success",
+        title: "All students deleted",
+        message: `${result.deleted} student account(s) removed.`,
+      });
+    } catch (err) {
+      showNotice({
+        type: "error",
+        title: "Bulk delete failed",
+        message: err?.message || "Unable to delete all students.",
+      });
+    }
+  };
+
+  const downloadUsersCsv = () => {
+    const header = "email,role,password";
+    const rows = [
+      header,
+      ...filteredUsers.map((u) => `${u.email},${u.role},`),
+    ];
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "users_export.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadCsvTemplate = () => {
+    const csv = "email,role,password\nstudent1@example.com,student,\ninstructor1@example.com,instructor,\nadmin1@example.com,admin,\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "users_template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const fileInputRef = useRef(null);
+
+  const handleCsvUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await importUsersCsvApi(file);
+      refreshUsers();
+      if (result.created?.length) {
+        showNotice({
+          type: "success",
+          title: "Users imported",
+          message: `${result.created_count} user(s) created, ${result.error_count} error(s).`,
+        });
+      } else {
+        showNotice({
+          type: "warning",
+          title: "Import completed",
+          message: result.error_count
+            ? `${result.error_count} row(s) failed (duplicates or missing email).`
+            : "No new users created.",
+        });
+      }
+    } catch (err) {
+      showNotice({
+        type: "error",
+        title: "Import failed",
+        message: err?.message || "Unable to import users.",
+      });
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-shell">
@@ -389,6 +505,27 @@ export default function AdminUserManagement() {
               </div>
             </div>
           </form>
+          <div className="admin-csv-row">
+            <span className="status-note">Bulk registration via CSV</span>
+            <div className="admin-bulk-buttons">
+              <button type="button" className="admin-action-btn subtle" onClick={downloadCsvTemplate}>
+                Download Template
+              </button>
+              <button type="button" className="admin-action-btn subtle" onClick={downloadUsersCsv}>
+                Export Users CSV
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                style={{ display: "none" }}
+                onChange={handleCsvUpload}
+              />
+              <button type="button" className="admin-action-btn" onClick={() => fileInputRef.current?.click()}>
+                Upload CSV
+              </button>
+            </div>
+          </div>
         </section>
 
         <section className="dashboard-card">
@@ -414,6 +551,21 @@ export default function AdminUserManagement() {
                 onClick={resetSelectedExams}
               >
                 Reset Selected Exams
+              </button>
+              <button
+                type="button"
+                className="admin-action-btn danger"
+                disabled={!selectedStudentIds.length}
+                onClick={handleBulkDelete}
+              >
+                Delete Selected
+              </button>
+              <button
+                type="button"
+                className="admin-action-btn danger"
+                onClick={handleDeleteAllStudents}
+              >
+                Delete All Students
               </button>
               <button
                 type="button"

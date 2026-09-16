@@ -305,6 +305,34 @@ export async function deleteUserApi(userId) {
   return data;
 }
 
+export async function bulkDeleteUsersApi(userIds, deleteAllStudents = false) {
+  const res = await fetch(`${API_URL}/admin/users/bulk-delete`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ user_ids: userIds, delete_all_students: deleteAllStudents }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to delete selected users");
+  }
+  return data;
+}
+
+export async function importUsersCsvApi(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/admin/users/import`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: formData,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to import users from CSV");
+  }
+  return data;
+}
+
 export async function resetUserExamsApi(userId) {
   const res = await fetch(`${API_URL}/admin/users/${userId}/exams`, {
     method: "DELETE",
