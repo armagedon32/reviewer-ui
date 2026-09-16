@@ -36,6 +36,7 @@ export default function AdminUserManagement() {
   });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [lastImport, setLastImport] = useState(null);
 
   const refreshUsers = () => {
     listUsersApi()
@@ -393,11 +394,12 @@ export default function AdminUserManagement() {
     try {
       const result = await importUsersCsvApi(file);
       refreshUsers();
+      setLastImport(result.created?.length ? result : null);
       if (result.created?.length) {
         showNotice({
           type: "success",
           title: "Users imported",
-          message: `${result.created_count} user(s) created, ${result.error_count} error(s).`,
+          message: `${result.created_count} user(s) created, ${result.error_count} error(s). Download the CSV below to get their temporary passwords.`,
         });
       } else {
         showNotice({
@@ -419,6 +421,26 @@ export default function AdminUserManagement() {
         fileInputRef.current.value = "";
       }
     }
+  };
+
+  const downloadImportCredentials = () => {
+    if (!lastImport?.created?.length) return;
+    const header = "email,role,temporary_password";
+    const rows = [
+      header,
+      ...lastImport.created.map((item) =>
+        [item.email, item.role, item.temporary_password || ""].join(",")
+      ),
+    ];
+    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "imported_accounts.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -506,7 +528,11 @@ export default function AdminUserManagement() {
             </div>
           </form>
           <div className="admin-csv-row">
-            <span className="status-note">Bulk registration via CSV</span>
+            <span className="status-note">
+              {lastImport?.created?.length
+                ? `${lastImport.created.length} account(s) from last import — get temp passwords below`
+                : "Bulk registration via CSV"}
+            </span>
             <div className="admin-bulk-buttons">
               <button type="button" className="admin-action-btn subtle" onClick={downloadCsvTemplate}>
                 Download Template
@@ -524,6 +550,11 @@ export default function AdminUserManagement() {
               <button type="button" className="admin-action-btn" onClick={() => fileInputRef.current?.click()}>
                 Upload CSV
               </button>
+              {lastImport?.created?.length > 0 && (
+                <button type="button" className="admin-action-btn pass" onClick={downloadImportCredentials}>
+                  Download Temp Passwords
+                </button>
+              )}
             </div>
           </div>
         </section>
